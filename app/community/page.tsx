@@ -95,8 +95,7 @@ export default function CommunityPage() {
                 Connect with fellow PMs, share experiences, and learn together.
               </p>
             </div>
-            <Button className="rounded-2xl bg-gradient-to-r from-primary to-primary/80 shadow-lg">
-              <Plus className="h-4 w-4 mr-2" />
+            <Button className="rounded-2xl app-gradient shadow-lg text-primary-foreground">
               New Post
             </Button>
           </div>

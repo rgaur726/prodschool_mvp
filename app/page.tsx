@@ -60,11 +60,13 @@ export default function HomePage() {
                   <span className="relative">
                     <span className="gradient-text">Confidence</span>
                     <motion.div
-                      className="absolute -bottom-2 left-0 right-0 h-3 bg-gradient-to-r from-primary/30 to-purple-500/30 rounded-full"
+                      className="absolute -bottom-2 left-0 right-0 h-3 rounded-full overflow-hidden"
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ duration: 1, delay: 0.5 }}
-                    />
+                    >
+                      <div className="w-full h-full app-gradient animate-pulse [animation-duration:3s] opacity-90" />
+                    </motion.div>
                   </span>
                 </h1>
 
@@ -78,7 +80,7 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   asChild
-                  className="rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-xl hover:shadow-2xl transition-all duration-300 text-lg px-8 py-6"
+                  className="rounded-2xl app-gradient hover:brightness-110 shadow-xl hover:shadow-2xl transition-all duration-300 text-lg px-8 py-6"
                 >
                   <Link href="/questions">
                     <Zap className="mr-2 h-5 w-5" />
@@ -105,7 +107,7 @@ export default function HomePage() {
                   {[1, 2, 3, 4, 5].map((i) => (
                     <div
                       key={i}
-                      className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-purple-500 border-2 border-background flex items-center justify-center text-white text-sm font-bold"
+                      className="w-10 h-10 rounded-2xl app-gradient border-2 border-background flex items-center justify-center text-white text-sm font-bold shadow-md shadow-cyan-500/30"
                     >
                       {String.fromCharCode(64 + i)}
                     </div>
@@ -155,9 +157,8 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <Button className="w-full rounded-2xl bg-gradient-to-r from-primary to-primary/80">
-                      <Play className="h-4 w-4 mr-2" />
-                      Start Practice
+                    <Button className="w-full rounded-2xl app-gradient text-primary-foreground">
+                      Get Started
                     </Button>
                   </div>
                 </div>
@@ -217,8 +218,8 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="text-center group"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-3xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <metric.icon className="h-8 w-8 text-primary" />
+                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 app-gradient shadow shadow-cyan-500/30">
+                  <metric.icon className="h-8 w-8 text-white" />
                 </div>
                 <div className="font-display font-bold text-3xl md:text-4xl gradient-text mb-2">{metric.value}</div>
                 <div className="text-sm text-muted-foreground">{metric.label}</div>
@@ -404,7 +405,7 @@ export default function HomePage() {
                   <Button
                     size="lg"
                     asChild
-                    className="rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-xl text-lg px-8 py-6"
+                    className="rounded-2xl app-gradient hover:brightness-110 shadow-xl text-lg px-8 py-6"
                   >
                     <Link href="/questions">
                       <Zap className="mr-2 h-5 w-5" />
