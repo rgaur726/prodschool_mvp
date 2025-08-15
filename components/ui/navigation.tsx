@@ -32,6 +32,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { supabase } from "@/lib/supabase-client"
+import { Loader2 } from "lucide-react"
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
@@ -55,8 +57,10 @@ export function MainNavigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
-  const isAppRoute = pathname.startsWith("/app")
-  const isLoggedIn = isAppRoute // Mock logged in state
+  // Replace route-based mock login
+  const [user, setUser] = useState<any>(null)
+  const [authLoading, setAuthLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   // Semi-sticky (auto-hide on scroll down, reveal on scroll up)
   const [hidden, setHidden] = useState(false)
@@ -96,7 +100,16 @@ export function MainNavigation() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const navItems = isAppRoute ? appNavigation : navigation
+  useEffect(() => {
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user || null))
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setUser(session?.user || null)
+    })
+    return () => { sub?.subscription.unsubscribe() }
+  }, [])
+
+  const navItems = user ? appNavigation : navigation
 
   return (
     <>
@@ -143,7 +156,7 @@ export function MainNavigation() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            {!isLoggedIn ? (
+            {!user ? (
               <>
                 {/* Single Get Started button triggers modal */}
                 <Button
@@ -182,7 +195,7 @@ export function MainNavigation() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer text-destructive">
+                  <DropdownMenuItem className="cursor-pointer text-destructive" onClick={async () => { await supabase?.auth.signOut(); setAuthModalOpen(false); }}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
@@ -222,7 +235,7 @@ export function MainNavigation() {
                   {item.name}
                 </Link>
               ))}
-              {!isLoggedIn && (
+              {!user && (
                 <div className="pt-4 border-t space-y-3">
                   <Button variant="ghost" asChild className="w-full justify-start rounded-2xl">
                     <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
@@ -261,21 +274,47 @@ export function MainNavigation() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full gap-3 relative group border border-primary/20 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40 hover:border-primary/40 hover:bg-primary/5 transition-all"
-                  onClick={() => {
-                    // TODO: integrate Google OAuth
-                    console.log('Google OAuth trigger')
+                  className="w-full gap-3 relative group border border-primary/20 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40 hover:border-primary/40 hover:bg-primary/5 transition-all disabled:opacity-70"
+                  disabled={googleLoading}
+                  onClick={async () => {
+                    if (!supabase) { alert('Auth unavailable'); return }
+                    try {
+                      setGoogleLoading(true)
+                      const origin = window.location.origin
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                          redirectTo: `${origin}`,
+                          queryParams: {
+                            access_type: 'offline',
+                            prompt: 'consent',
+                          },
+                        },
+                      })
+                      if (error) {
+                        alert(error.message)
+                        setGoogleLoading(false)
+                      }
+                      // On success, browser will redirect.
+                    } catch (e: any) {
+                      alert(e.message || 'Google sign-in failed')
+                      setGoogleLoading(false)
+                    }
                   }}
                 >
                   <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-primary/10 via-fuchsia-500/10 to-cyan-400/10" />
-                  <svg className="h-5 w-5 relative" viewBox="0 0 48 48" aria-hidden="true">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6 1.54 7.38 2.84l5.4-5.26C33.66 3.64 29.3 2 24 2 14.82 2 7.09 7.64 3.69 15.26l6.57 5.1C12.17 13.49 17.56 9.5 24 9.5Z" />
-                    <path fill="#4285F4" d="M46.11 24.55c0-1.57-.14-2.72-.44-3.91H24v7.09h12.7c-.26 1.8-1.67 4.49-4.8 6.3l7.39 5.73c4.42-4.09 6.82-10.11 6.82-15.21Z" />
-                    <path fill="#FBBC05" d="M10.26 28.15A14.38 14.38 0 0 1 9.5 24c0-1.44.26-2.84.73-4.15l-6.57-5.1A22.004 22.004 0 0 0 2 24c0 3.59.86 6.98 2.66 10.24l6.6-6.09Z" />
-                    <path fill="#34A853" d="M24 46c5.84 0 10.74-1.9 14.32-5.18l-7.39-5.73c-1.98 1.2-4.65 2.04-6.93 2.04-5.29 0-9.8-3.56-11.41-8.51l-6.6 6.09C10.89 41.56 17.02 46 24 46Z" />
-                    <path fill="none" d="M2 2h44v44H2Z" />
-                  </svg>
-                  <span className="relative font-medium">Continue with Google</span>
+                  {googleLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin relative" />
+                  ) : (
+                    <svg className="h-5 w-5 relative" viewBox="0 0 48 48" aria-hidden="true">
+                      <path fill="#EA4335" d="M24 9.5c3.54 0 6 1.54 7.38 2.84l5.4-5.26C33.66 3.64 29.3 2 24 2 14.82 2 7.09 7.64 3.69 15.26l6.57 5.1C12.17 13.49 17.56 9.5 24 9.5Z" />
+                      <path fill="#4285F4" d="M46.11 24.55c0-1.57-.14-2.72-.44-3.91H24v7.09h12.7c-.26 1.8-1.67 4.49-4.8 6.3l7.39 5.73c4.42-4.09 6.82-10.11 6.82-15.21Z" />
+                      <path fill="#FBBC05" d="M10.26 28.15A14.38 14.38 0 0 1 9.5 24c0-1.44.26-2.84.73-4.15l-6.57-5.1A22.004 22.004 0 0 0 2 24c0 3.59.86 6.98 2.66 10.24l6.6-6.09Z" />
+                      <path fill="#34A853" d="M24 46c5.84 0 10.74-1.9 14.32-5.18l-7.39-5.73c-1.98 1.2-4.65 2.04-6.93 2.04-5.29 0-9.8-3.56-11.41-8.51l-6.6 6.09C10.89 41.56 17.02 46 24 46Z" />
+                      <path fill="none" d="M2 2h44v44H2Z" />
+                    </svg>
+                  )}
+                  <span className="relative font-medium">{googleLoading ? 'Redirecting...' : 'Continue with Google'}</span>
                 </Button>
                 <div className="flex items-center gap-4">
                   <Separator className="flex-1" />
@@ -286,10 +325,46 @@ export function MainNavigation() {
 
               {/* Email Auth Form */}
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault()
-                  // TODO: integrate auth
-                  setAuthModalOpen(false)
+                  if (!supabase) { alert('Auth temporarily unavailable: Supabase not configured.'); return }
+                  setAuthLoading(true)
+                  const form = e.currentTarget
+                  const emailEl = form.querySelector('#email') as HTMLInputElement | null
+                  const passEl = form.querySelector('#password') as HTMLInputElement | null
+                  const nameInput = form.querySelector('#name') as HTMLInputElement | null
+                  const email = emailEl?.value.trim() || ''
+                  const password = passEl?.value || ''
+                  if (!email || !password) { setAuthLoading(false); return }
+
+                  if (authMode === 'signup') {
+                    const { data, error: signUpError } = await supabase.auth.signUp({
+                      email,
+                      password,
+                      options: { data: { full_name: nameInput?.value } }
+                    })
+                    if (signUpError) {
+                      if (signUpError.message.toLowerCase().includes('registered')) {
+                        alert('Account already exists. Please sign in.')
+                        setAuthMode('signin')
+                      } else {
+                        alert(signUpError.message)
+                      }
+                      setAuthLoading(false)
+                      return
+                    }
+                    alert('Check your email to confirm your account.')
+                    setAuthModalOpen(false)
+                  } else {
+                    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+                    if (signInError) {
+                      alert(signInError.message)
+                      setAuthLoading(false)
+                      return
+                    }
+                    setAuthModalOpen(false)
+                  }
+                  setAuthLoading(false)
                 }}
                 className="space-y-4"
               >
@@ -307,8 +382,8 @@ export function MainNavigation() {
                   <Label htmlFor="password">Password</Label>
                   <Input id="password" type="password" placeholder="••••••••" required />
                 </div>
-                <Button type="submit" className="w-full shadow-md shadow-primary/20">
-                  {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                <Button type="submit" className="w-full shadow-md shadow-primary/20" disabled={authLoading}>
+                  {authLoading ? 'Please wait...' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
                 </Button>
               </form>
               <div className="text-sm text-center pt-1">
