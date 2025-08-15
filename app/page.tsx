@@ -3,6 +3,8 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase-client"
 // removed dynamic alignment logic
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -29,6 +31,25 @@ import { mockQuestions, mockTestimonials } from "@/lib/mock-data"
 export default function HomePage() {
   const hotQuestions = mockQuestions.filter((q) => q.isHot)
   const [leftOffset, setLeftOffset] = useState(0)
+  const router = useRouter()
+
+  // Redirect authenticated users directly to dashboard
+  useEffect(() => {
+    let active = true
+    async function check() {
+      try {
+        if (!supabase) return
+        const { data } = await supabase.auth.getSession()
+        if (!active) return
+        if (data.session?.user) {
+          router.replace('/app/dashboard')
+        }
+      } catch (_) {
+        /* silent */
+      }
+    }
+    check()
+  }, [router])
 
   useEffect(() => {
     function alignCenters() {
@@ -177,13 +198,12 @@ export default function HomePage() {
               {/* CTAs directly under stack */}
               <div className="mt-6 w-full max-w-md flex flex-col sm:flex-row gap-4">
                 <Button
-                  asChild
-                  className="flex-1 min-w-[200px] max-w-[230px] rounded-2xl app-gradient brightness-110 hover:brightness-125 shadow-xl hover:shadow-2xl transition-all duration-300 text-base py-4 px-5 text-black font-semibold"
+                  variant="outline"
+                  onClick={() => window.dispatchEvent(new CustomEvent('prodschool:auth-open', { detail: { mode: 'signup', source: 'hero-start-practicing' } }))}
+                  className="flex-1 min-w-[230px] rounded-2xl border-2 hover:bg-muted/50 text-sm py-4 px-6 bg-background/50 backdrop-blur-sm flex items-center justify-center"
                 >
-                  <Link href="/questions" className="flex items-center justify-center">
-                    <Zap className="mr-2 h-5 w-5" />
-                    Start Practicing
-                  </Link>
+                  <Zap className="mr-2 h-5 w-5" />
+                  Start Practicing
                 </Button>
                 <Button
                   variant="outline"
@@ -201,35 +221,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Metrics Strip - Modernized */}
-      <section className="py-16 border-y bg-gradient-to-r from-muted/30 via-background to-muted/30">
-        <div className="container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { value: "150+", label: "Practice Questions", icon: BookOpen },
-              { value: "12.5K+", label: "Active Users", icon: Users },
-              { value: "85%", label: "Avg Improvement", icon: TrendingUp },
-              { value: "92%", label: "Success Rate", icon: Trophy },
-            ].map((metric, index) => (
-              <motion.div
-                key={metric.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center group"
-              >
-                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 app-gradient shadow shadow-cyan-500/30">
-                  <metric.icon className="h-8 w-8 text-white" />
-                </div>
-                <div className="font-display font-bold text-3xl md:text-4xl gradient-text mb-2">{metric.value}</div>
-                <div className="text-sm text-muted-foreground">{metric.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Hot Questions Marquee - Enhanced */}
+  {/* Hot Questions Marquee - Enhanced (moved above metrics) */}
       <section className="py-16">
         <div className="container mb-8">
           <motion.div
@@ -278,6 +270,34 @@ export default function HomePage() {
             </Card>
           ))}
         </Marquee>
+      </section>
+
+      {/* Metrics Strip - Modernized (moved below trending questions) */}
+      <section className="py-16 border-y bg-gradient-to-r from-muted/30 via-background to-muted/30">
+        <div className="container">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { value: "150+", label: "Practice Questions", icon: BookOpen },
+              { value: "12.5K+", label: "Active Users", icon: Users },
+              { value: "85%", label: "Avg Improvement", icon: TrendingUp },
+              { value: "92%", label: "Success Rate", icon: Trophy },
+            ].map((metric, index) => (
+              <motion.div
+                key={metric.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="text-center group"
+              >
+                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 app-gradient shadow shadow-cyan-500/30">
+                  <metric.icon className="h-8 w-8 text-white" />
+                </div>
+                <div className="font-display font-bold text-3xl md:text-4xl gradient-text mb-2">{metric.value}</div>
+                <div className="text-sm text-muted-foreground">{metric.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Feature Trio - Redesigned */}

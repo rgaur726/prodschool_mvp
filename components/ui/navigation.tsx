@@ -26,6 +26,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,6 +53,7 @@ const appNavigation = [
 
 export function MainNavigation() {
   const pathname = usePathname()
+  const router = useRouter()
   // Mobile menu for small screens
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -184,7 +186,8 @@ export function MainNavigation() {
           <div className="absolute inset-y-0 right-4 md:right-6 flex items-center gap-2">
             {!user ? (
               <Button
-                className="rounded-xl app-gradient brightness-110 hover:brightness-125 shadow-xl hover:shadow-2xl px-4 sm:px-5 text-black transition-all"
+                variant="outline"
+                className="rounded-2xl border-2 hover:bg-muted/50 text-sm py-2.5 px-5 bg-background/50 backdrop-blur-sm"
                 onClick={() => {
                   setAuthMode('signin')
                   setAuthModalOpen(true)
@@ -193,16 +196,38 @@ export function MainNavigation() {
                 Get Started
               </Button>
             ) : (
-              <Link href="/app/profile" className="focus:outline-none">
-                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl">
-                  <Avatar className="h-10 w-10 rounded-2xl">
-                    <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                    <AvatarFallback className="rounded-2xl app-gradient text-primary-foreground">
-                      {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-2xl">
+                    <Avatar className="h-10 w-10 rounded-2xl">
+                      <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    {user?.email}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { window.location.href = '/app/profile' }}>Profile</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      try {
+                        await supabase.auth.signOut()
+                      } catch (e) {
+                        console.error(e)
+                      } finally {
+                        setUser(null)
+                        router.push('/')
+                      }
+                    }}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" /> Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             {/* Hamburger for small screens */}
             <Button
