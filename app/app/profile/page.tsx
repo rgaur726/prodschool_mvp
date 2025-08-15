@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,70 +30,122 @@ import {
   Bell,
   Shield,
 } from "lucide-react"
+import { supabase } from "@/lib/supabase-client"
 
-const userProfile = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  location: "San Francisco, CA",
-  joinDate: "January 2024",
-  bio: "Aspiring Product Manager with 3 years of experience in software engineering. Currently preparing for PM interviews at top tech companies.",
-  avatar: "/placeholder.svg?height=120&width=120",
+// Placeholder / sample data for sections we haven't wired to real backend yet.
+const placeholderAchievements = [
+  { id: 1, title: "First Perfect Score", description: "Scored 10/10 on a question", earned: true, date: "2024-01-15" },
+  { id: 2, title: "Week Streak", description: "Practiced 7 days in a row", earned: true, date: "2024-01-20" },
+  { id: 3, title: "Peer Helper", description: "Gave 10 helpful reviews", earned: true, date: "2024-01-25" },
+  { id: 4, title: "Speed Demon", description: "Completed question under time limit", earned: true, date: "2024-01-18" },
+  { id: 5, title: "Master Analyst", description: "Excel in analytics questions", earned: false, date: null },
+  { id: 6, title: "Design Guru", description: "Master product design questions", earned: false, date: null },
+]
+const placeholderSkillProgress = [
+  { skill: "Product Design", level: 85, trend: "+12%" },
+  { skill: "Market Sizing", level: 72, trend: "+8%" },
+  { skill: "Analytics", level: 78, trend: "+15%" },
+  { skill: "Strategy", level: 88, trend: "+6%" },
+  { skill: "Technical", level: 65, trend: "+20%" },
+]
+const placeholderRecentActivity = [
+  { type: "question", title: "Design a feature for Instagram Stories", score: 8.5, date: "2 hours ago" },
+  { type: "achievement", title: "Earned 'Peer Helper' badge", date: "1 day ago" },
+  { type: "review", title: "Received peer review (4.5/5)", date: "2 days ago" },
+  { type: "streak", title: "12-day practice streak!", date: "3 days ago" },
+]
+
+interface ProfileData {
+  name: string
+  email: string
+  location: string
+  joinDate: string
+  bio: string
+  avatar?: string | null
   stats: {
-    questionsCompleted: 47,
-    averageScore: 8.2,
-    timeSpent: 32.5,
-    streak: 12,
-    rank: 156,
-    totalUsers: 12500,
-  },
-  achievements: [
-    {
-      id: 1,
-      title: "First Perfect Score",
-      description: "Scored 10/10 on a question",
-      earned: true,
-      date: "2024-01-15",
-    },
-    { id: 2, title: "Week Streak", description: "Practiced 7 days in a row", earned: true, date: "2024-01-20" },
-    { id: 3, title: "Peer Helper", description: "Gave 10 helpful reviews", earned: true, date: "2024-01-25" },
-    {
-      id: 4,
-      title: "Speed Demon",
-      description: "Completed question under time limit",
-      earned: true,
-      date: "2024-01-18",
-    },
-    { id: 5, title: "Master Analyst", description: "Excel in analytics questions", earned: false, date: null },
-    { id: 6, title: "Design Guru", description: "Master product design questions", earned: false, date: null },
-  ],
-  skillProgress: [
-    { skill: "Product Design", level: 85, trend: "+12%" },
-    { skill: "Market Sizing", level: 72, trend: "+8%" },
-    { skill: "Analytics", level: 78, trend: "+15%" },
-    { skill: "Strategy", level: 88, trend: "+6%" },
-    { skill: "Technical", level: 65, trend: "+20%" },
-  ],
-  recentActivity: [
-    { type: "question", title: "Design a feature for Instagram Stories", score: 8.5, date: "2 hours ago" },
-    { type: "achievement", title: "Earned 'Peer Helper' badge", date: "1 day ago" },
-    { type: "review", title: "Received peer review (4.5/5)", date: "2 days ago" },
-    { type: "streak", title: "12-day practice streak!", date: "3 days ago" },
-  ],
+    questionsCompleted: number
+    averageScore: number
+    timeSpent: number
+    streak: number
+    rank: number
+    totalUsers: number
+  }
+  achievements: typeof placeholderAchievements
+  skillProgress: typeof placeholderSkillProgress
+  recentActivity: typeof placeholderRecentActivity
 }
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    name: userProfile.name,
-    email: userProfile.email,
-    location: userProfile.location,
-    bio: userProfile.bio,
-  })
+  const [loading, setLoading] = useState(true)
+  const [userProfile, setUserProfile] = useState<ProfileData | null>(null)
+  const [formData, setFormData] = useState({ name: "", email: "", location: "", bio: "" })
+
+  // Load the authenticated user from Supabase
+  useEffect(() => {
+    let isMounted = true
+    const load = async () => {
+      if (!supabase) { setLoading(false); return }
+      const { data } = await supabase.auth.getUser()
+      const user = data.user
+      if (user && isMounted) {
+        const name = (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "User"
+        const created = user.created_at ? new Date(user.created_at) : new Date()
+        const joinDate = created.toLocaleString(undefined, { month: "long", year: "numeric" })
+        const profile: ProfileData = {
+          name,
+          email: user.email || "",
+          location: "", // future: fetch from profile table
+          joinDate,
+            bio: "", // future: fetch from profile table
+          avatar: user.user_metadata?.avatar_url || null,
+          stats: {
+            questionsCompleted: 0,
+            averageScore: 0,
+            timeSpent: 0,
+            streak: 0,
+            rank: 0,
+            totalUsers: 0,
+          },
+          achievements: placeholderAchievements,
+          skillProgress: placeholderSkillProgress,
+          recentActivity: placeholderRecentActivity,
+        }
+        setUserProfile(profile)
+        setFormData({ name: profile.name, email: profile.email, location: profile.location, bio: profile.bio })
+      }
+      setLoading(false)
+    }
+    load()
+    return () => { isMounted = false }
+  }, [])
 
   const handleSave = () => {
-    // Mock save functionality
+    // For now just update local userProfile; future: persist to Supabase table
+    if (userProfile) {
+      setUserProfile({ ...userProfile, ...formData })
+    }
     setIsEditing(false)
-    console.log("Profile updated:", formData)
+  }
+
+  if (loading) {
+    return (
+      <div className="container py-24 text-center">
+        <p className="text-muted-foreground animate-pulse">Loading profile...</p>
+      </div>
+    )
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="container py-24 text-center space-y-4">
+        <h1 className="font-display font-bold text-3xl">Profile</h1>
+        <p className="text-muted-foreground">You need to be signed in to view your profile.</p>
+        <Button asChild>
+          <a href="/" className="rounded-xl">Go Home</a>
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -255,7 +307,7 @@ export default function ProfilePage() {
                         <Label htmlFor="location">Location</Label>
                         <Input
                           id="location"
-                          value={formData.location}
+                            value={formData.location}
                           onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                           className="rounded-xl"
                         />

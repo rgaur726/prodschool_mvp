@@ -170,37 +170,27 @@ export function MainNavigation() {
                 </Button>
               </>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2">
+                <Link href="/app/profile" className="focus:outline-none">
                   <Button variant="ghost" className="relative h-10 w-10 rounded-2xl">
                     <Avatar className="h-10 w-10 rounded-2xl">
                       <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
                       <AvatarFallback className="rounded-2xl app-gradient text-primary-foreground">
-                        JD
+                        {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-2xl">
-                  <DropdownMenuItem asChild>
-                    <Link href="/app/profile" className="cursor-pointer">
-                      <User className="h-4 w-4 mr-2" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/app/settings" className="cursor-pointer">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer text-destructive" onClick={async () => { await supabase?.auth.signOut(); setAuthModalOpen(false); }}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={async () => { await supabase?.auth.signOut(); setAuthModalOpen(false); }}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             )}
 
             <Button
@@ -281,16 +271,15 @@ export function MainNavigation() {
                     try {
                       setGoogleLoading(true)
                       const origin = window.location.origin
+                      const callback = `${origin}/auth/callback`
                       const { error } = await supabase.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
-                          redirectTo: `${origin}`,
-                          queryParams: {
-                            access_type: 'offline',
-                            prompt: 'consent',
-                          },
+                          redirectTo: callback,
+                          queryParams: { access_type: 'offline', prompt: 'consent' },
                         },
                       })
+                      console.log('[Google OAuth] Redirect initiated to', callback)
                       if (error) {
                         alert(error.message)
                         setGoogleLoading(false)
