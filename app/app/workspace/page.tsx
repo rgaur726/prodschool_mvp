@@ -55,8 +55,7 @@ export default function WorkspacePage() {
   }
 
   const handleSaveResponse = () => {
-    // Mock save functionality
-    console.log("Saving response:", response)
+    // Mock save functionality (debug log removed)
   }
 
   return (

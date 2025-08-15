@@ -2,6 +2,7 @@ import { Inter, Space_Grotesk } from "next/font/google"
 
 export const inter = Inter({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   variable: "--font-body",
   display: "swap",
 })

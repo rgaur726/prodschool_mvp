@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+// removed dynamic alignment logic
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +11,6 @@ import { Marquee } from "@/components/ui/marquee"
 import { MainNavigation } from "@/components/ui/navigation"
 import { DynamicBackground } from "@/components/ui/dynamic-background"
 import {
-  ArrowRight,
   Play,
   Users,
   Star,
@@ -27,6 +28,27 @@ import { mockQuestions, mockTestimonials } from "@/lib/mock-data"
 
 export default function HomePage() {
   const hotQuestions = mockQuestions.filter((q) => q.isHot)
+  const [leftOffset, setLeftOffset] = useState(0)
+
+  useEffect(() => {
+    function alignCenters() {
+      if (window.innerWidth < 1024) { // only apply on large screens
+        setLeftOffset(0)
+        return
+      }
+      const left = document.getElementById('hero-left-column')
+      const right = document.getElementById('hero-right-column')
+      if (!left || !right) return
+      const l = left.getBoundingClientRect()
+      const r = right.getBoundingClientRect()
+      const leftCenter = l.top + l.height / 2
+      const rightCenter = r.top + r.height / 2
+      setLeftOffset(rightCenter - leftCenter)
+    }
+    alignCenters()
+    window.addEventListener('resize', alignCenters)
+    return () => window.removeEventListener('resize', alignCenters)
+  }, [])
 
   return (
     <div className="min-h-screen overflow-hidden">
@@ -34,21 +56,26 @@ export default function HomePage() {
       <MainNavigation />
 
       {/* Hero Section - Completely Redesigned */}
-      <section className="relative py-20 lg:py-32">
+  <section className="relative min-h-screen pt-8 pb-10 lg:pt-12 lg:pb-16 flex items-start">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <motion.div
+              id="hero-left-column"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               className="space-y-8"
+              style={leftOffset ? { transform: `translateY(${leftOffset}px)` } : undefined}
             >
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                  <Badge className="bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary border-primary/30 rounded-2xl px-4 py-2">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    AI-Powered Learning
+                  <Badge className="relative overflow-hidden rounded-full px-5 py-1.5 text-xs font-semibold tracking-wide bg-gradient-to-r from-primary/60 via-primary/50 to-fuchsia-500/50 text-white ring-1 ring-primary/40 shadow-sm backdrop-blur-sm">
+                    <span className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_30%,white,transparent_60%)]" />
+                    <span className="relative flex items-center">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      AI-Powered Learning
+                    </span>
                   </Badge>
                 </div>
 
@@ -60,7 +87,7 @@ export default function HomePage() {
                   <span className="relative">
                     <span className="gradient-text">Confidence</span>
                     <motion.div
-                      className="absolute -bottom-2 left-0 right-0 h-3 rounded-full overflow-hidden"
+                      className="absolute -bottom-1.5 left-0 right-0 h-2 rounded-full overflow-hidden"
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ duration: 1, delay: 0.5 }}
@@ -76,33 +103,10 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  size="lg"
-                  asChild
-                  className="rounded-2xl app-gradient hover:brightness-110 shadow-xl hover:shadow-2xl transition-all duration-300 text-lg px-8 py-6"
-                >
-                  <Link href="/questions">
-                    <Zap className="mr-2 h-5 w-5" />
-                    Start Practicing Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  asChild
-                  className="rounded-2xl border-2 hover:bg-muted/50 text-lg px-8 py-6 bg-background/50 backdrop-blur-sm"
-                >
-                  <Link href="/videos">
-                    <Play className="mr-2 h-5 w-5" />
-                    Watch Demo
-                  </Link>
-                </Button>
-              </div>
+              {/* (CTAs now live under right column cards) */}
 
               {/* Social Proof */}
-              <div className="flex items-center gap-6 pt-4">
+              <div id="social-proof-anchor" className="flex items-center gap-6 pt-4">
                 <div className="flex -space-x-3">
                   {[1, 2, 3, 4, 5].map((i) => (
                     <div
@@ -120,81 +124,77 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            {/* Right Visual */}
+            {/* Right Visual: Stacked Question Cards + CTAs */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
+              id="hero-right-column"
+              className="relative flex flex-col items-center w-full h-full max-h-[780px]"
             >
-              <div className="relative">
-                {/* Main Card */}
-                <div className="glass rounded-3xl p-8 shadow-2xl">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <Badge className="bg-red-500/20 text-red-600 border-red-500/30 rounded-xl">🔥 Hot Question</Badge>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        45 min
+              <div className="flex flex-col w-full max-w-md flex-1 pt-2">
+                {mockQuestions.slice(0,3).map((q, i) => {
+                  const rotations = [2.8, -1.8, 1.6];
+                  return (
+                    <motion.div
+                      key={q.id}
+                      className={`group glass rounded-3xl p-6 shadow-xl border border-primary/10 backdrop-blur-lg cursor-pointer select-none transition-colors ${i>0 ? '-mt-6' : ''}`}
+                      initial={{ opacity: 0, y: 28, scale: 0.97, rotate: rotations[i] * 1.4 }}
+                      animate={{ opacity: 1, y: 0, scale: 1, rotate: rotations[i] }}
+                      transition={{ duration: 0.55, delay: 0.1 * i, ease: 'easeOut' }}
+                      whileHover={{ y: -6, scale: 1.02, rotate: rotations[i] * 0.4, boxShadow: '0 14px 38px -10px hsl(var(--primary)/0.38)' }}
+                      whileTap={{ scale: 0.995 }}
+                      onClick={() => window.dispatchEvent(new CustomEvent('prodschool:auth-open', { detail: { mode: 'signup', source: 'hero-card' } }))}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="rounded-xl text-xs px-3 py-1">{q.category}</Badge>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5" />
+                            {q.timeLimit}m
+                            <span className="inline-flex items-center gap-1">
+                              <Users className="h-3.5 w-3.5" /> {q.attempts}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <h3 className="font-display font-semibold text-base mb-1 line-clamp-2">{q.title}</h3>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{q.prompt?.slice(0,120) || 'Practice real interview scenario...'}</p>
+                        </div>
+                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-current text-yellow-500" />
+                            {q.avgScore?.toFixed?.(1) || '7.2'} avg
+                          </span>
+                          {q.isHot && <span className="inline-flex items-center gap-1 text-red-500">🔥 Hot</span>}
+                          <span className="flex items-center gap-1"><Brain className="h-3 w-3" /> AI Feedback</span>
+                        </div>
                       </div>
-                    </div>
-
-                    <div>
-                      <h3 className="font-display font-bold text-xl mb-2">Design a feature for Instagram Stories</h3>
-                      <p className="text-muted-foreground text-sm">
-                        Instagram wants to increase user engagement with Stories...
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">1,247 attempts</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span className="text-sm">7.2 avg</span>
-                      </div>
-                    </div>
-
-                    <Button className="w-full rounded-2xl app-gradient text-primary-foreground">
-                      Get Started
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Floating Elements */}
-                <motion.div
-                  className="absolute -top-6 -right-6 glass rounded-2xl p-4 shadow-lg"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
+                    </motion.div>
+                  );
+                })}
+              </div>
+              {/* CTAs directly under stack */}
+              <div className="mt-6 w-full max-w-md flex flex-col sm:flex-row gap-4">
+                <Button
+                  asChild
+                  className="flex-1 min-w-[200px] max-w-[230px] rounded-2xl app-gradient brightness-110 hover:brightness-125 shadow-xl hover:shadow-2xl transition-all duration-300 text-base py-4 px-5 text-black font-semibold"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-green-500 rounded-xl flex items-center justify-center">
-                      <CheckCircle className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm">AI Feedback</div>
-                      <div className="text-xs text-muted-foreground">Score: 8.5/10</div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="absolute -bottom-6 -left-6 glass rounded-2xl p-4 shadow-lg"
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, delay: 1 }}
+                  <Link href="/questions" className="flex items-center justify-center">
+                    <Zap className="mr-2 h-5 w-5" />
+                    Start Practicing
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  asChild
+                  className="flex-1 min-w-[230px] rounded-2xl border-2 hover:bg-muted/50 text-sm py-4 px-6 bg-background/50 backdrop-blur-sm"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm">Progress</div>
-                      <div className="text-xs text-muted-foreground">+15% this week</div>
-                    </div>
-                  </div>
-                </motion.div>
+                  <Link href="/videos">
+                    <Play className="mr-2 h-5 w-5" />
+                    Watch Demo
+                  </Link>
+                </Button>
               </div>
             </motion.div>
           </div>
@@ -410,7 +410,6 @@ export default function HomePage() {
                     <Link href="/questions">
                       <Zap className="mr-2 h-5 w-5" />
                       Start Free Practice
-                      <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>
                   <Button

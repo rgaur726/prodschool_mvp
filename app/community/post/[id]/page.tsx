@@ -30,7 +30,7 @@ export default function PostDetailPage() {
 
   const handleReply = () => {
     if (newReply.trim()) {
-      console.log("New reply:", newReply)
+      // Reply submission placeholder (debug log removed)
       setNewReply("")
     }
   }

@@ -36,7 +36,7 @@ export default function ContactForm() {
     setIsSubmitting(true)
     // Simulate API call
     setTimeout(() => {
-      console.log(values)
+      // Submission simulated (debug log removed)
       setIsSubmitting(false)
       form.reset()
       alert("Thank you for your message. We'll get back to you soon!")
@@ -44,7 +44,7 @@ export default function ContactForm() {
   }
 
   return (
-    <section className="bg-background py-20">
+  <section className="bg-background/40 backdrop-blur-sm supports-[backdrop-filter]:bg-background/30 py-20 transition-colors">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

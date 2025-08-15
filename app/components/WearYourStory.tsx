@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 
 export default function WearYourStory() {
   return (
-    <section className="bg-background py-20">
+  <section className="bg-background/40 backdrop-blur-sm supports-[backdrop-filter]:bg-background/25 py-20 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

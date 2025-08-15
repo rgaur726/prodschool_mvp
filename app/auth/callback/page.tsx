@@ -20,7 +20,6 @@ export default function AuthCallbackPage() {
         }
         const { data, error } = await supabase.auth.getSession()
         if (error) {
-          console.error('[AuthCallback] getSession error', error)
           setStatus('error')
           setMessage(error.message)
           return

@@ -20,8 +20,6 @@ import {
   CreditCard,
   Clock,
   User,
-  Menu,
-  X,
   Settings,
   LogOut,
   UserCircle,
@@ -54,6 +52,7 @@ const appNavigation = [
 
 export function MainNavigation() {
   const pathname = usePathname()
+  // Mobile menu for small screens
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
@@ -109,115 +108,132 @@ export function MainNavigation() {
     return () => { sub?.subscription.unsubscribe() }
   }, [])
 
+  // External trigger to open auth modal (e.g., hero stacked cards)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail: any = (e as CustomEvent).detail || {}
+      const mode = detail.mode === 'signin' ? 'signin' : 'signup'
+      setAuthMode(mode)
+      setAuthModalOpen(true)
+    }
+    window.addEventListener('prodschool:auth-open', handler as EventListener)
+    return () => window.removeEventListener('prodschool:auth-open', handler as EventListener)
+  }, [])
+
   const navItems = user ? appNavigation : navigation
+
+  // No horizontal scroll logic needed now
 
   return (
     <>
-      <header className={cn(
-        "fixed top-0 left-0 right-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-200",
-        hidden ? "opacity-0" : "opacity-100",
-        scrolled ? "bg-background/60 supports-[backdrop-filter]:bg-background/50 shadow-sm" : "bg-background/80 supports-[backdrop-filter]:bg-background/60"
-      )}>
-        <div className="container flex h-20 items-center justify-between">
-          {/* Left: Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="relative">
-              <div className="h-10 w-10 rounded-2xl app-gradient flex items-center justify-center shadow-lg">
-                <svg className="h-6 w-6 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
+      <header
+        className={cn(
+          'fixed top-0 left-0 right-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-200',
+          hidden ? 'opacity-0' : 'opacity-100',
+          scrolled
+            ? 'bg-background/60 supports-[backdrop-filter]:bg-background/50 shadow-sm'
+            : 'bg-background/80 supports-[backdrop-filter]:bg-background/60'
+        )}
+      >
+        <div className="relative h-20 w-full px-4 md:px-6">
+          {/* Logo (left) */}
+          <div className="absolute inset-y-0 left-4 md:left-6 flex items-center">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-2xl app-gradient flex items-center justify-center shadow-lg">
+                  <svg className="h-6 w-6 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                  </svg>
+                </div>
+                <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
               </div>
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
-            </div>
-            <div>
-              <span className="font-display font-bold text-xl gradient-text">ProdSchool</span>
-              <div className="text-xs text-muted-foreground -mt-1">AI-Powered</div>
-            </div>
-          </Link>
+              <div className="hidden sm:block">
+                <span className="font-display font-bold text-xl gradient-text leading-none">ProdSchool</span>
+                <div className="text-[10px] tracking-wide text-muted-foreground -mt-0.5">AI-Powered</div>
+              </div>
+            </Link>
+          </div>
 
-          {/* Center: Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1 bg-muted/50 rounded-2xl py-1.5 px-2.5 backdrop-blur-sm mx-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
-                  pathname === item.href || (item.href === "/community" && pathname.startsWith("/community"))
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50",
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.name}
-              </Link>
-            ))}
-          </nav>
+          {/* Center nav (visible on md+ screens; icon-only until >=1120px) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex w-full justify-center pointer-events-none">
+            <div className="pointer-events-auto max-w-[calc(100%-200px)]">{/* reserve space for logo & actions */}
+              <nav className="flex items-center space-x-1 bg-muted/50 rounded-2xl py-1.5 px-2.5 backdrop-blur-sm shadow-sm">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-label={item.name}
+                    title={item.name}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200',
+                      'text-sm min-[1120px]:text-sm',
+                      pathname === item.href || (item.href === '/community' && pathname.startsWith('/community'))
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span className="hidden min-[1120px]:inline">{item.name}</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2">
+          {/* Right auth/profile & mobile menu trigger */}
+          <div className="absolute inset-y-0 right-4 md:right-6 flex items-center gap-2">
             {!user ? (
-              <>
-                {/* Single Get Started button triggers modal */}
-                <Button
-                  className="rounded-xl app-gradient hover:brightness-110 shadow-lg px-5 text-primary-foreground"
-                  onClick={() => {
-                    setAuthMode('signin');
-                    setAuthModalOpen(true);
-                  }}
-                >
-                  Get Started
-                </Button>
-              </>
+              <Button
+                className="rounded-xl app-gradient brightness-110 hover:brightness-125 shadow-xl hover:shadow-2xl px-4 sm:px-5 text-black transition-all"
+                onClick={() => {
+                  setAuthMode('signin')
+                  setAuthModalOpen(true)
+                }}
+              >
+                Get Started
+              </Button>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link href="/app/profile" className="focus:outline-none">
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-2xl">
-                    <Avatar className="h-10 w-10 rounded-2xl">
-                      <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                      <AvatarFallback className="rounded-2xl app-gradient text-primary-foreground">
-                        {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl"
-                  onClick={async () => { await supabase?.auth.signOut(); setAuthModalOpen(false); }}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+              <Link href="/app/profile" className="focus:outline-none">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-2xl">
+                  <Avatar className="h-10 w-10 rounded-2xl">
+                    <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
+                    <AvatarFallback className="rounded-2xl app-gradient text-primary-foreground">
+                      {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
                 </Button>
-              </div>
+              </Link>
             )}
-
+            {/* Hamburger for small screens */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden rounded-xl"
+              className="md:hidden rounded-xl"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileMenuOpen ? (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18" /><path d="M6 6l12 12" /></svg>
+              ) : (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" /></svg>
+              )}
             </Button>
           </div>
-
-
         </div>
-        {/* Mobile menu */}
+
+        {/* Mobile collapsible menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t bg-background/95 backdrop-blur-xl">
-            <div className="container py-6 space-y-3">
+          <div className="md:hidden border-t bg-background/95 backdrop-blur-xl">
+            <div className="px-4 py-4 space-y-2">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors",
-                    pathname === item.href || (item.href === "/community" && pathname.startsWith("/community"))
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    'flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-colors',
+                    pathname === item.href || (item.href === '/community' && pathname.startsWith('/community'))
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   )}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -225,24 +241,11 @@ export function MainNavigation() {
                   {item.name}
                 </Link>
               ))}
-              {!user && (
-                <div className="pt-4 border-t space-y-3">
-                  <Button variant="ghost" asChild className="w-full justify-start rounded-2xl">
-                    <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                      Sign In
-                    </Link>
-                  </Button>
-                  <Button asChild className="w-full rounded-2xl">
-                    <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                      Get Started
-                    </Link>
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         )}
-        {/* Auth Modal */}
+
+  {/* Auth Modal */}
         <Dialog open={authModalOpen} onOpenChange={setAuthModalOpen}>
           <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-background via-background to-primary/10">
             {/* Decorative gradient bar */}
@@ -279,7 +282,7 @@ export function MainNavigation() {
                           queryParams: { access_type: 'offline', prompt: 'consent' },
                         },
                       })
-                      console.log('[Google OAuth] Redirect initiated to', callback)
+                      // Removed debug log
                       if (error) {
                         alert(error.message)
                         setGoogleLoading(false)
