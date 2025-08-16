@@ -103,11 +103,11 @@ export function MainNavigation() {
 
   useEffect(() => {
     if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user || null))
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+    supabase.auth.getSession().then(({ data }) => setUser(data?.session?.user || null)).catch(()=>{})
+    const authSub = supabase.auth.onAuthStateChange?.((_evt, session) => {
       setUser(session?.user || null)
     })
-    return () => { sub?.subscription.unsubscribe() }
+    return () => { authSub?.data?.subscription?.unsubscribe?.() }
   }, [])
 
   // External trigger to open auth modal (e.g., hero stacked cards)
@@ -214,7 +214,7 @@ export function MainNavigation() {
                   <DropdownMenuItem
                     onClick={async () => {
                       try {
-                        await supabase.auth.signOut()
+                        await supabase?.auth?.signOut?.()
                       } catch (e) {
                         console.error(e)
                       } finally {

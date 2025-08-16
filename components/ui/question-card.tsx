@@ -28,7 +28,7 @@ interface QuestionCardProps {
   isExpanded?: boolean
   onToggle?: () => void
   showPrompt?: boolean
-  onTogglePrompt?: () => void
+  onTogglePrompt?: (visible: boolean) => void
   onStartPractice?: () => void
   onViewSolutions?: () => void
   isClickable?: boolean

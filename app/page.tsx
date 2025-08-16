@@ -25,9 +25,11 @@ import {
   BookOpen,
   TrendingUp,
   CheckCircle,
+  UserPlus,
 } from "lucide-react"
 import { mockQuestions, mockTestimonials } from "@/lib/mock-data"
 import { CompanyLogos } from "@/components/CompanyLogos"
+import Footer from "./components/Footer"
 
 export default function HomePage() {
   const hotQuestions = mockQuestions.filter((q) => q.isHot)
@@ -180,40 +182,56 @@ export default function HomePage() {
             >
               <div className="flex flex-col w-full max-w-md flex-1 pt-2">
                 {mockQuestions.slice(0,3).map((q, i) => {
-                  const rotations = [2.8, -1.8, 1.6];
+                  const rotations = [2.8, -1.8, 1.6]
+                  const lateral = [0, 3, -2]            // even subtler horizontal staggering
+                  const verticalLift = [0, 0, 0]        // flattened
+                  const overlapMargin = ['', '-mt-px', '-mt-px'] // near-zero overlap
+                  const z = 40 - i * 5
                   return (
                     <motion.div
                       key={q.id}
-                      className={`group glass rounded-3xl p-6 shadow-xl border border-primary/10 backdrop-blur-lg cursor-pointer select-none transition-colors ${i>0 ? '-mt-6' : ''}`}
-                      initial={{ opacity: 0, y: 28, scale: 0.97, rotate: rotations[i] * 1.4 }}
-                      animate={{ opacity: 1, y: 0, scale: 1, rotate: rotations[i] }}
-                      transition={{ duration: 0.55, delay: 0.1 * i, ease: 'easeOut' }}
-                      whileHover={{ y: -6, scale: 1.02, rotate: rotations[i] * 0.4, boxShadow: '0 14px 38px -10px hsl(var(--primary)/0.38)' }}
-                      whileTap={{ scale: 0.995 }}
+                      className={`group glass rounded-3xl p-6 shadow-xl border border-primary/10 backdrop-blur-lg cursor-pointer select-none transition-colors ${overlapMargin[i]}`}
+                      style={{ zIndex: z }}
+                      initial={{ opacity: 0, y: 28, x: lateral[i] * 0.3, scale: 0.965, rotate: rotations[i] * 1.2 }}
+                      animate={{ opacity: 1, y: verticalLift[i], x: lateral[i], scale: 1, rotate: rotations[i] }}
+                      transition={{ duration: 0.55, delay: 0.08 * i, ease: 'easeOut' }}
+                      whileHover={{ y: verticalLift[i] - 2, x: lateral[i] * 1.01, scale: 1.006, rotate: rotations[i] * 0.26, boxShadow: '0 6px 18px -10px hsl(var(--primary)/0.28)' }}
+                      whileTap={{ scale: 0.99 }}
                       onClick={() => window.dispatchEvent(new CustomEvent('prodschool:auth-open', { detail: { mode: 'signup', source: 'hero-card' } }))}
                     >
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Badge variant="outline" className="rounded-xl text-xs px-3 py-1">{q.category}</Badge>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Clock className="h-3.5 w-3.5" />
-                            {q.timeLimit}m
-                            <span className="inline-flex items-center gap-1">
-                              <Users className="h-3.5 w-3.5" /> {q.attempts}
-                            </span>
-                          </div>
+                        {/* Top meta: Category (left) + Difficulty (right) */}
+                        <div className="flex items-center justify-between gap-3">
+                          <Badge variant="outline" className="rounded-xl text-xs px-3 py-1 max-w-[70%] truncate">
+                            {q.category}
+                          </Badge>
+                          <Badge
+                            variant="secondary"
+                            className="rounded-xl text-[10px] px-2 py-0.5 font-medium whitespace-nowrap"
+                          >
+                            {q.difficulty || 'Medium'}
+                          </Badge>
                         </div>
                         <div>
                           <h3 className="font-display font-semibold text-base mb-1 line-clamp-2">{q.title}</h3>
                           <p className="text-xs text-muted-foreground line-clamp-2">{q.prompt?.slice(0,120) || 'Practice real interview scenario...'}</p>
                         </div>
-                        <div className="flex items-center gap-4 text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
+                        {/* Bottom meta: Time, Attempts, Rating, Hot */}
+                        <div className="flex items-center flex-wrap gap-4 text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
                           <span className="flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-current text-yellow-500" />
-                            {q.avgScore?.toFixed?.(1) || '7.2'} avg
+                            <Clock className="h-3.5 w-3.5" /> {q.timeLimit}m
                           </span>
-                          {q.isHot && <span className="inline-flex items-center gap-1 text-red-500">🔥 Hot</span>}
-                          <span className="flex items-center gap-1"><Brain className="h-3 w-3" /> AI Feedback</span>
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3.5 w-3.5" /> {q.attempts}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-current text-yellow-500" /> {q.avgScore?.toFixed?.(1) || '7.2'}
+                          </span>
+                          {q.isHot && (
+                            <span className="inline-flex items-center gap-1 text-red-500 font-medium">
+                              🔥 Hot
+                            </span>
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -541,38 +559,50 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials Marquee - Enhanced */}
-  <section className="py-16 section-hazy">
-        <div className="container mb-8">
+      {/* Testimonials Marquees - PM Focused */}
+      <section className="py-16 section-hazy">
+        <div className="container mb-10">
           <h2 className="font-display font-bold text-3xl md:text-4xl text-center">
-            What Our <span className="gradient-text">Users Say</span>
+            What Fellow <span className="gradient-text">PMs Are Saying</span>
           </h2>
+          <p className="text-center text-sm md:text-base text-muted-foreground mt-4 max-w-2xl mx-auto">
+            Real PMs sharing quick wins from their interview prep.
+          </p>
         </div>
-        <Marquee className="py-4" reverse pauseOnHover>
-          {mockTestimonials.map((testimonial) => (
-            <Card
-              key={testimonial.id}
-              className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center gap-1 mb-4">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current text-yellow-500" />
-                  ))}
-                </div>
-                <p className="text-sm mb-6 leading-relaxed">"{testimonial.content}"</p>
-                <div className="flex items-center gap-3">
+        {/* Row 1 (left to right) */}
+        <Marquee className="py-4" pauseOnHover speed="slow">
+          {mockTestimonials.map((t) => (
+            <Card key={`row1-${t.id}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20">
+              <CardContent className="p-6 flex flex-col h-full">
+                <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-sm">
-                    {testimonial.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                    {t.name.split(' ').map(n=>n[0]).join('')}
                   </div>
-                  <div>
-                    <div className="font-semibold text-sm">{testimonial.name}</div>
-                    <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                  <div className="space-y-0.5">
+                    <div className="font-semibold text-sm tracking-tight">{t.name}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{t.role}</div>
                   </div>
                 </div>
+                <p className="text-sm leading-relaxed text-muted-foreground/90 line-clamp-4">“{t.content}”</p>
+              </CardContent>
+            </Card>
+          ))}
+        </Marquee>
+        {/* Row 2 (right to left) */}
+        <Marquee className="py-6 mt-4" reverse pauseOnHover speed="slow">
+          {mockTestimonials.slice().reverse().map((t) => (
+            <Card key={`row2-${t.id}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20">
+              <CardContent className="p-6 flex flex-col h-full">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-sm">
+                    {t.name.split(' ').map(n=>n[0]).join('')}
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="font-semibold text-sm tracking-tight">{t.name}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{t.role}</div>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground/90 line-clamp-4">“{t.content}”</p>
               </CardContent>
             </Card>
           ))}
@@ -600,25 +630,20 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="flex justify-center">
                   <Button
                     size="lg"
                     variant="outline"
-                    asChild
-                    className="rounded-2xl border-2 text-lg px-8 py-6 bg-background/50 backdrop-blur-sm hover:bg-muted/50"
+                    className="rounded-2xl border-2 text-lg px-10 py-6 bg-background/60 backdrop-blur-sm hover:bg-muted/60 flex items-center gap-3 shadow-md shadow-primary/10"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('prodschool:auth-open', { detail: { mode: 'signup' } }))
+                    }}
                   >
-                    <Link href="/questions" className="flex items-center">
-                      <Zap className="mr-2 h-5 w-5" />
-                      Start Free Practice
-                    </Link>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    asChild
-                    className="rounded-2xl border-2 text-lg px-8 py-6 bg-background/50 backdrop-blur-sm"
-                  >
-                    <Link href="/pricing">View Pricing</Link>
+                    <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-xl app-gradient shadow">
+                      <UserPlus className="h-4 w-4 text-primary-foreground" />
+                      <span className="sr-only">Create Account</span>
+                    </span>
+                    Create Your Free Account
                   </Button>
                 </div>
 
@@ -641,6 +666,7 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
+      <Footer />
     </div>
   )
 }

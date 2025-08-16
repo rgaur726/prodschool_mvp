@@ -218,4 +218,6 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   /* Fade mask edges for horizontal scroll nav */
   .nav-mask { mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); }
+  /* Line clamp utilities (custom since @tailwindcss/line-clamp not installed) */
+  .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
 }

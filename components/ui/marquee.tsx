@@ -20,9 +20,9 @@ export function Marquee({
   speed = "normal",
 }: MarqueeProps) {
   const speedClass = {
-    slow: "animate-marquee",
-    normal: "animate-marquee",
-    fast: "animate-marquee",
+  slow: "animate-marquee-slow",
+  normal: "animate-marquee-normal",
+  fast: "animate-marquee-fast",
   }[speed]
 
   return (
