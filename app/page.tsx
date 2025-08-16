@@ -27,12 +27,67 @@ import {
   CheckCircle,
   UserPlus,
 } from "lucide-react"
-import { mockQuestions, mockTestimonials } from "@/lib/mock-data"
+import { mockTestimonials } from "@/lib/mock-data"
 import { CompanyLogos } from "@/components/CompanyLogos"
 import Footer from "./components/Footer"
 
 export default function HomePage() {
-  const hotQuestions = mockQuestions.filter((q) => q.isHot)
+  // Live questions fetched from Supabase (falls back to mock data if unavailable)
+  interface Question {
+    id: number | string
+    title: string
+    content?: string | null
+    description?: string | null
+    category?: string | null
+    question_type?: string | null // potential alt field name
+    type?: string | null
+    difficulty?: string | null
+    time?: number | null
+    attempts?: number | null
+    rating?: number | null
+    isHot?: boolean | null
+    viewCount?: number | null
+    companyTags?: string[] | null
+  }
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
+  const [questionsError, setQuestionsError] = useState<string | null>(null)
+  const baseQuestions = (questions && questions.length > 0) ? questions.map(raw => {
+    // Flexible key resolution (handles multiple possible column names)
+    const get = (...keys: string[]) => {
+      for (const k of keys) {
+        if (k in (raw as any) && (raw as any)[k] !== null && (raw as any)[k] !== undefined) return (raw as any)[k]
+      }
+      return undefined
+    }
+    const description = get('description','content','body','details','prompt') || ''
+    const category = get('category','question_type','type','questionType') || 'General'
+    const difficulty = get('difficulty','level','diff') || 'Medium'
+    const formatDifficulty = (d?: string) => (d || 'Medium').split(/[\s_-]+/).filter(Boolean).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join('')
+    const timeLimit = get('time','time_limit','timeLimit','duration') || 45
+    const avgScore = get('rating','avgScore','avg_score','score','average_score') || 7.0
+    const isHot = !!get('isHot','is_hot','hot')
+    const attempts = get('viewCount','views','attempts','attempt_count') || Math.floor(Math.random()*900)+100
+    const companyTags = get('companyTags','company_tags','companytags') || null
+    return {
+      ...raw,
+      description,
+      category,
+      difficulty: formatDifficulty(difficulty),
+      timeLimit,
+      avgScore: Number(avgScore),
+      isHot,
+      attempts: Number(attempts),
+      companyTags: Array.isArray(companyTags) ? companyTags : (typeof companyTags === 'string' ? companyTags.split(',').map((s:string)=>s.trim()).filter(Boolean) : [])
+    }
+  }) : []
+  const hotQuestions = baseQuestions.filter((q: any) => q.isHot)
+  const trendingSource = hotQuestions.length ? hotQuestions : baseQuestions
+  if (typeof window !== 'undefined') {
+    // lightweight diagnostic (won't spam—runs each render, but cheap)
+    // Comment out later if noisy
+    console.debug('[trending diagnostics]', { total: baseQuestions.length, hot: hotQuestions.length })
+  }
   const [leftOffset, setLeftOffset] = useState(0)
   const leftMetricsRef = useRef<HTMLDivElement | null>(null)
   const metricsGridRef = useRef<HTMLDivElement | null>(null)
@@ -56,6 +111,38 @@ export default function HomePage() {
     }
     check()
   }, [router])
+
+  // Fetch latest questions from Supabase
+  useEffect(() => {
+    let cancelled = false
+    async function fetchQuestions() {
+      if (!supabase) return
+      try {
+        setLoadingQuestions(true)
+        // Select all needed columns; adapt if RLS restrictions
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .limit(50)
+        if (error) {
+          console.error('[questions fetch error]', error)
+          setQuestionsError(error.message)
+          return
+        }
+        if (!cancelled && data) {
+          console.log('[questions fetch success] rows:', data.length, data.slice(0,3))
+          setQuestions(data as any)
+        }
+      } catch (err) {
+        console.error('[questions fetch unexpected]', err)
+        if (!cancelled) setQuestionsError((err as any)?.message || 'Unexpected error')
+      } finally {
+        if (!cancelled) setLoadingQuestions(false)
+      }
+    }
+    fetchQuestions()
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     function alignCenters() {
@@ -181,7 +268,28 @@ export default function HomePage() {
               className="relative flex flex-col items-center w-full h-full max-h-[780px]"
             >
               <div className="flex flex-col w-full max-w-md flex-1 pt-2">
-                {mockQuestions.slice(0,3).map((q, i) => {
+                {(loadingQuestions && baseQuestions.length === 0 ? Array.from({length:3}) : baseQuestions.slice(0,3)).map((q: any, i: number) => {
+                  const formatDifficulty = (d?: string) => (d || 'Medium').split(/[\s_-]+/).filter(Boolean).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join('')
+                  // Skeleton placeholder when loading
+                  if (!q) {
+                    return (
+                      <div key={`skeleton-${i}`} className={`rounded-3xl p-6 border border-primary/10 backdrop-blur-lg animate-pulse bg-background/40 ${i>0?'-mt-px':''}`}>
+                        <div className="flex justify-between mb-4">
+                          <div className="h-5 w-24 rounded-md bg-muted/40" />
+                          <div className="h-5 w-14 rounded-md bg-muted/30" />
+                        </div>
+                        <div className="space-y-2 mb-4">
+                          <div className="h-4 w-3/4 rounded-md bg-muted/40" />
+                          <div className="h-4 w-2/3 rounded-md bg-muted/30" />
+                        </div>
+                        <div className="flex gap-4">
+                          <div className="h-3 w-10 rounded bg-muted/30" />
+                          <div className="h-3 w-10 rounded bg-muted/30" />
+                          <div className="h-3 w-10 rounded bg-muted/30" />
+                        </div>
+                      </div>
+                    )
+                  }
                   const rotations = [2.8, -1.8, 1.6]
                   const lateral = [0, 3, -2]            // even subtler horizontal staggering
                   const verticalLift = [0, 0, 0]        // flattened
@@ -209,12 +317,12 @@ export default function HomePage() {
                             variant="secondary"
                             className="rounded-xl text-[10px] px-2 py-0.5 font-medium whitespace-nowrap"
                           >
-                            {q.difficulty || 'Medium'}
+                            {formatDifficulty(q.difficulty)}
                           </Badge>
                         </div>
                         <div>
                           <h3 className="font-display font-semibold text-base mb-1 line-clamp-2">{q.title}</h3>
-                          <p className="text-xs text-muted-foreground line-clamp-2">{q.prompt?.slice(0,120) || 'Practice real interview scenario...'}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{q.description?.slice(0,120) || 'Practice real interview scenario...'}</p>
                         </div>
                         {/* Bottom meta: Time, Attempts, Rating, Hot */}
                         <div className="flex items-center flex-wrap gap-4 text-[11px] text-muted-foreground group-hover:text-foreground transition-colors">
@@ -237,6 +345,15 @@ export default function HomePage() {
                     </motion.div>
                   );
                 })}
+                {!loadingQuestions && baseQuestions.length === 0 && (
+                  <div className="mt-2 text-center text-xs text-muted-foreground space-y-2">
+                    <div>No questions available yet.</div>
+                    {questionsError && (
+                      <div className="text-red-500/80">{questionsError}</div>
+                    )}
+                    <div className="text-[10px] opacity-60">Check: table name 'questions', RLS SELECT policy, column names.</div>
+                  </div>
+                )}
               </div>
               {/* CTAs directly under stack */}
               <div className="mt-6 w-full max-w-md flex flex-col sm:flex-row gap-4">
@@ -281,9 +398,30 @@ export default function HomePage() {
           </motion.div>
         </div>
         <Marquee className="py-6" pauseOnHover>
-          {hotQuestions.map((q, index) => {
-            const content = (q.description || q.prompt || '')
-            // Mock companies that asked this question (placeholder logic)
+          {(loadingQuestions && trendingSource.length===0 ? Array.from({length:6}) : trendingSource.slice(0,8)).map((q: any, index: number) => {
+            if (!q) {
+              return (
+                <div key={`trend-skel-${index}`} className="w-96 shrink-0 mx-4">
+                  <Card className="h-[380px] flex flex-col rounded-3xl border-2 relative overflow-hidden">
+                    <CardContent className="p-6 animate-pulse space-y-4">
+                      <div className="flex justify-between mb-2">
+                        <div className="h-5 w-24 bg-muted/40 rounded" />
+                        <div className="h-5 w-16 bg-muted/30 rounded" />
+                      </div>
+                      <div className="h-4 w-3/4 bg-muted/40 rounded" />
+                      <div className="h-4 w-2/3 bg-muted/30 rounded" />
+                      <div className="h-4 w-5/6 bg-muted/20 rounded" />
+                      <div className="mt-8 space-y-2">
+                        <div className="h-3 w-full bg-muted/20 rounded" />
+                        <div className="h-10 w-full bg-muted/30 rounded-xl" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )
+            }
+            const content = (q.description || q.content || '')
+            const formatDifficulty = (d?: string) => (d||'Medium').split(/[\s_-]+/).filter(Boolean).map(p=>p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join('')
             const companyPalette: Record<string, { bg: string; text: string; border: string }> = {
               Meta: { bg: 'bg-[#0866FF]/15', text: 'text-[#4D8DFF]', border: 'border-[#0866FF]/30' },
               Google: { bg: 'bg-[#4285F4]/15', text: 'text-[#5C9CFF]', border: 'border-[#4285F4]/30' },
@@ -294,17 +432,7 @@ export default function HomePage() {
               Airbnb: { bg: 'bg-[#FF385C]/15', text: 'text-[#FF6D85]', border: 'border-[#FF385C]/30' },
               Stripe: { bg: 'bg-[#635BFF]/15', text: 'text-[#8A84FF]', border: 'border-[#635BFF]/30' },
             }
-            const companySets = [
-              ['Meta','Amazon','Google','Stripe','Airbnb'], // will show +2
-              ['YouTube','Netflix','Google','Amazon','Meta','Stripe'], // will show +3
-              ['Microsoft','Stripe','Amazon'],
-              ['Google','Airbnb','Meta'],
-              ['Amazon','Stripe','Google'],
-              ['Airbnb','Microsoft','Meta'],
-              ['Stripe','Netflix','Amazon'],
-              ['Google','Meta','YouTube']
-            ]
-            const companies = companySets[index % companySets.length]
+            const companies: string[] = Array.isArray(q.companyTags) ? q.companyTags : []
             const maxCompanyTags = 3
             const visibleCompanies = companies.slice(0, maxCompanyTags)
             const hiddenCompanyCount = companies.length - visibleCompanies.length
@@ -326,14 +454,14 @@ export default function HomePage() {
                     </div>
                   )}
                   <CardContent className="p-6 flex flex-col h-full">
-                    {/* Difficulty & Type Tags on Top */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="inline-flex items-center rounded-xl text-[11px] px-3 py-1 font-medium tracking-wide border border-primary/40 text-primary/90 bg-primary/10 backdrop-blur-sm">
+                    {/* Category & Difficulty (match hero badge styling) */}
+                    <div className="flex items-center justify-between mb-3 gap-3">
+                      <Badge variant="outline" className="rounded-xl text-[11px] px-3 py-1 truncate max-w-[70%]">
                         {q.category}
-                      </span>
-                      <span className="inline-flex items-center rounded-xl text-[11px] px-3 py-1 font-medium tracking-wide border border-primary/45 text-primary bg-primary/15 shadow-[0_0_0_1px_hsl(var(--primary)/0.25)_inset]">
-                        {q.difficulty}
-                      </span>
+                      </Badge>
+                      <Badge variant="secondary" className="rounded-xl text-[10px] px-2 py-0.5 font-medium whitespace-nowrap">
+                        {formatDifficulty(q.difficulty)}
+                      </Badge>
                     </div>
                     {/* Title */}
                     <h3 className="font-display font-semibold text-base leading-snug mb-2 line-clamp-2 min-h-[3rem]">
@@ -345,11 +473,28 @@ export default function HomePage() {
                     </p>
                     {/* Companies (collapsed to one line with +X) */}
                     <div className="flex items-center gap-2 mb-4 -mt-1 flex-nowrap overflow-hidden" title={companies.join(', ')}>
-                      {visibleCompanies.map((c) => {
-                        const colors = companyPalette[c]
+                      {visibleCompanies.map((c, ci) => {
+                        const key = (c || '').trim()
+                        const label = key.split(/[\s_-]+/).filter(Boolean).map(p=>p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join('')
+                        // Deterministic gradient selection
+                        const gradients = [
+                          'from-pink-500 to-rose-500',
+                          'from-amber-500 to-orange-600',
+                          'from-emerald-500 to-teal-600',
+                          'from-indigo-500 to-violet-600',
+                          'from-sky-500 to-cyan-500',
+                          'from-fuchsia-500 to-pink-600',
+                          'from-blue-600 to-indigo-600'
+                        ]
+                        let idx = 0
+                        for (let i=0;i<key.length;i++) idx = (idx + key.charCodeAt(i)) % gradients.length
+                        const gradient = gradients[idx]
                         return (
-                          <span key={c} className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-medium border backdrop-blur-sm ${colors.bg} ${colors.text} ${colors.border}`}>
-                            {c}
+                          <span
+                            key={key+ci}
+                            className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-medium border border-white/10 bg-gradient-to-br ${gradient} text-white shadow-sm shadow-black/20`}
+                          >
+                            {label}
                           </span>
                         )
                       })}
