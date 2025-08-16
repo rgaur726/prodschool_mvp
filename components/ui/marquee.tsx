@@ -29,7 +29,7 @@ export function Marquee({
     <div
       className={cn(
         "marquee group flex overflow-hidden",
-        pauseOnHover && "hover:[animation-play-state:paused]",
+        pauseOnHover && "hover:[animation-play-state:paused] *:hover:[animation-play-state:paused]",
         className,
       )}
     >

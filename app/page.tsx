@@ -77,7 +77,7 @@ export default function HomePage() {
       <MainNavigation />
 
       {/* Hero Section - Completely Redesigned */}
-  <section className="relative min-h-screen pt-8 pb-10 lg:pt-12 lg:pb-16 flex items-start">
+  <section className="relative min-h-screen pt-8 pb-10 lg:pt-12 lg:pb-16 flex items-start section-hazy">
         <div className="container">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
@@ -221,9 +221,10 @@ export default function HomePage() {
         </div>
       </section>
 
-  {/* Hot Questions Marquee - Enhanced (moved above metrics) */}
-      <section className="py-16">
-        <div className="container mb-8">
+
+  {/* Trending Questions - Marquee (restored) with enhanced cards */}
+  <section className="py-20 section-dark">
+        <div className="container mb-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -231,49 +232,117 @@ export default function HomePage() {
             className="text-center"
           >
             <h2 className="font-display font-bold text-3xl md:text-4xl mb-4">
-              🔥 <span className="gradient-text">Trending Questions</span>
+              <span className="gradient-text">Trending Questions</span>
             </h2>
-            <p className="text-muted-foreground text-lg">Practice with the most popular questions this week</p>
+            <p className="text-muted-foreground text-lg">Practice what other candidates are attempting right now</p>
           </motion.div>
         </div>
-        <Marquee className="py-4" pauseOnHover>
-          {hotQuestions.map((question) => (
-            <Card
-              key={question.id}
-              className="w-80 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="destructive" className="text-xs rounded-xl">
-                    🔥 Hot
-                  </Badge>
-                  <Badge variant="outline" className="text-xs rounded-xl">
-                    {question.category}
-                  </Badge>
-                </div>
-                <h3 className="font-semibold text-sm mb-3 line-clamp-2">{question.title}</h3>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {question.timeLimit}m
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    {question.attempts}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-current text-yellow-500" />
-                    {question.avgScore.toFixed(1)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <Marquee className="py-6" pauseOnHover>
+          {hotQuestions.map((q, index) => {
+            const content = (q.description || q.prompt || '')
+            // Mock companies that asked this question (placeholder logic)
+            const companyPalette: Record<string, { bg: string; text: string; border: string }> = {
+              Meta: { bg: 'bg-[#0866FF]/15', text: 'text-[#4D8DFF]', border: 'border-[#0866FF]/30' },
+              Google: { bg: 'bg-[#4285F4]/15', text: 'text-[#5C9CFF]', border: 'border-[#4285F4]/30' },
+              Amazon: { bg: 'bg-[#FF9900]/15', text: 'text-[#FFB547]', border: 'border-[#FF9900]/30' },
+              YouTube: { bg: 'bg-[#FF0000]/15', text: 'text-[#FF5555]', border: 'border-[#FF0000]/30' },
+              Netflix: { bg: 'bg-[#E50914]/15', text: 'text-[#FF5A63]', border: 'border-[#E50914]/30' },
+              Microsoft: { bg: 'bg-[#2563EB]/15', text: 'text-[#5B8EEB]', border: 'border-[#2563EB]/30' },
+              Airbnb: { bg: 'bg-[#FF385C]/15', text: 'text-[#FF6D85]', border: 'border-[#FF385C]/30' },
+              Stripe: { bg: 'bg-[#635BFF]/15', text: 'text-[#8A84FF]', border: 'border-[#635BFF]/30' },
+            }
+            const companySets = [
+              ['Meta','Amazon','Google','Stripe','Airbnb'], // will show +2
+              ['YouTube','Netflix','Google','Amazon','Meta','Stripe'], // will show +3
+              ['Microsoft','Stripe','Amazon'],
+              ['Google','Airbnb','Meta'],
+              ['Amazon','Stripe','Google'],
+              ['Airbnb','Microsoft','Meta'],
+              ['Stripe','Netflix','Amazon'],
+              ['Google','Meta','YouTube']
+            ]
+            const companies = companySets[index % companySets.length]
+            const maxCompanyTags = 3
+            const visibleCompanies = companies.slice(0, maxCompanyTags)
+            const hiddenCompanyCount = companies.length - visibleCompanies.length
+            return (
+              <motion.div
+                key={q.id}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.05 }}
+                className="w-96 shrink-0 mx-4"
+              >
+                <Card className="h-[380px] flex flex-col rounded-3xl border-2 hover:border-primary/40 transition-colors modern-card relative overflow-visible">
+                  {q.isHot && index < 2 && (
+                    <div className="absolute -top-3 -right-3">
+                      <span className="inline-flex items-center gap-1 rounded-xl px-3 py-1 text-[10px] font-semibold tracking-wide bg-gradient-to-r from-pink-500 via-red-500 to-amber-500 text-white shadow-lg shadow-red-500/40 border border-white/20 rotate-3">
+                        🔥 Hot
+                      </span>
+                    </div>
+                  )}
+                  <CardContent className="p-6 flex flex-col h-full">
+                    {/* Difficulty & Type Tags on Top */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="inline-flex items-center rounded-xl text-[11px] px-3 py-1 font-medium tracking-wide border border-primary/40 text-primary/90 bg-primary/10 backdrop-blur-sm">
+                        {q.category}
+                      </span>
+                      <span className="inline-flex items-center rounded-xl text-[11px] px-3 py-1 font-medium tracking-wide border border-primary/45 text-primary bg-primary/15 shadow-[0_0_0_1px_hsl(var(--primary)/0.25)_inset]">
+                        {q.difficulty}
+                      </span>
+                    </div>
+                    {/* Title */}
+                    <h3 className="font-display font-semibold text-base leading-snug mb-2 line-clamp-2 min-h-[3rem]">
+                      {q.title}
+                    </h3>
+                    {/* Content */}
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-5">
+                      {content}
+                    </p>
+                    {/* Companies (collapsed to one line with +X) */}
+                    <div className="flex items-center gap-2 mb-4 -mt-1 flex-nowrap overflow-hidden" title={companies.join(', ')}>
+                      {visibleCompanies.map((c) => {
+                        const colors = companyPalette[c]
+                        return (
+                          <span key={c} className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-medium border backdrop-blur-sm ${colors.bg} ${colors.text} ${colors.border}`}>
+                            {c}
+                          </span>
+                        )
+                      })}
+                      {hiddenCompanyCount > 0 && (
+                        <span
+                          className="inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-medium border border-primary/40 bg-primary/15 text-primary/90 backdrop-blur-sm select-none"
+                          aria-label={`+${hiddenCompanyCount} more companies`}
+                        >
+                          +{hiddenCompanyCount}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-auto space-y-4">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{q.timeLimit}m</span>
+                        <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{q.attempts}</span>
+                        <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-current text-yellow-500" />{q.avgScore.toFixed(1)}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-xl border-2 text-xs py-2.5 hover:bg-muted/60"
+                        onClick={() => window.dispatchEvent(new CustomEvent('prodschool:auth-open', { detail: { mode: 'signup', source: 'trending-attempt', questionId: q.id } }))}
+                      >
+                        Attempt Question
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })}
         </Marquee>
       </section>
 
       {/* Metrics Strip - Modernized (moved below trending questions) */}
-      <section className="py-16 border-y bg-gradient-to-r from-muted/30 via-background to-muted/30">
+  <section className="py-16 border-y section-hazy">
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
@@ -301,7 +370,7 @@ export default function HomePage() {
       </section>
 
       {/* Feature Trio - Redesigned */}
-      <section className="py-20 bg-gradient-to-b from-background to-muted/30">
+  <section className="py-20 section-dark">
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -363,7 +432,7 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials Marquee - Enhanced */}
-      <section className="py-16 bg-muted/30">
+  <section className="py-16 section-hazy">
         <div className="container mb-8">
           <h2 className="font-display font-bold text-3xl md:text-4xl text-center">
             What Our <span className="gradient-text">Users Say</span>
@@ -401,7 +470,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section - Redesigned */}
-      <section className="py-20">
+  <section className="py-20 section-dark">
         <div className="container">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -424,10 +493,11 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
                     size="lg"
+                    variant="outline"
                     asChild
-                    className="rounded-2xl app-gradient hover:brightness-110 shadow-xl text-lg px-8 py-6"
+                    className="rounded-2xl border-2 text-lg px-8 py-6 bg-background/50 backdrop-blur-sm hover:bg-muted/50"
                   >
-                    <Link href="/questions">
+                    <Link href="/questions" className="flex items-center">
                       <Zap className="mr-2 h-5 w-5" />
                       Start Free Practice
                     </Link>
