@@ -27,6 +27,7 @@ import {
   CheckCircle,
 } from "lucide-react"
 import { mockQuestions, mockTestimonials } from "@/lib/mock-data"
+import { CompanyLogos } from "@/components/CompanyLogos"
 
 export default function HomePage() {
   const hotQuestions = mockQuestions.filter((q) => q.isHot)
@@ -341,10 +342,24 @@ export default function HomePage() {
         </Marquee>
       </section>
 
-      {/* Metrics Strip - Modernized (moved below trending questions) */}
-  <section className="py-16 border-y section-hazy">
+      {/* Community & Metrics Section - Enhanced */}
+  <section className="py-20 border-y section-hazy">
         <div className="container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {/* Tagline + Logos */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="mb-14 text-center space-y-8"
+          >
+            <h3 className="text-base md:text-lg font-medium text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              <span className="text-foreground font-semibold">Join a fast-growing cohort</span> of aspiring and current PMs practicing with ProdSchool—improving faster and landing roles at top companies.
+            </h3>
+            <CompanyLogos className="opacity-80" />
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
             {[
               { value: "150+", label: "Practice Questions", icon: BookOpen },
               { value: "12.5K+", label: "Active Users", icon: Users },
@@ -356,13 +371,14 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center group"
+                className="text-center group relative"
               >
-                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 app-gradient shadow shadow-cyan-500/30">
+                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300 app-gradient shadow shadow-cyan-500/30">
                   <metric.icon className="h-8 w-8 text-white" />
                 </div>
-                <div className="font-display font-bold text-3xl md:text-4xl gradient-text mb-2">{metric.value}</div>
-                <div className="text-sm text-muted-foreground">{metric.label}</div>
+                <div className="font-display font-bold text-3xl md:text-4xl gradient-text mb-2 tracking-tight">{metric.value}</div>
+                <div className="text-sm text-muted-foreground font-medium">{metric.label}</div>
+                <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 border border-primary/20" />
               </motion.div>
             ))}
           </div>
