@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useLayoutEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase-client"
 // removed dynamic alignment logic
@@ -32,6 +32,9 @@ import { CompanyLogos } from "@/components/CompanyLogos"
 export default function HomePage() {
   const hotQuestions = mockQuestions.filter((q) => q.isHot)
   const [leftOffset, setLeftOffset] = useState(0)
+  const leftMetricsRef = useRef<HTMLDivElement | null>(null)
+  const metricsGridRef = useRef<HTMLDivElement | null>(null)
+  const [metricsOffset, setMetricsOffset] = useState(0)
   const router = useRouter()
 
   // Redirect authenticated users directly to dashboard
@@ -70,6 +73,27 @@ export default function HomePage() {
     alignCenters()
     window.addEventListener('resize', alignCenters)
     return () => window.removeEventListener('resize', alignCenters)
+  }, [])
+
+  // Vertically align metrics grid so its center matches the vertical center of the left descriptive panel
+  useLayoutEffect(() => {
+    function positionMetrics() {
+      if (!leftMetricsRef.current || !metricsGridRef.current) return
+      if (window.innerWidth < 768) { // reset on small screens
+        setMetricsOffset(0)
+        return
+      }
+      const leftRect = leftMetricsRef.current.getBoundingClientRect()
+      const rightRect = metricsGridRef.current.getBoundingClientRect()
+      const leftCenter = leftRect.height / 2
+      const rightCenter = rightRect.height / 2
+      // We adjust top margin so centers line up
+      const offset = (leftCenter - rightCenter)
+      setMetricsOffset(offset)
+    }
+    positionMetrics()
+    window.addEventListener('resize', positionMetrics)
+    return () => window.removeEventListener('resize', positionMetrics)
   }, [])
 
   return (
@@ -351,36 +375,106 @@ export default function HomePage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="mb-14 text-center space-y-8"
+            className="mb-14 space-y-12"
           >
-            <h3 className="text-base md:text-lg font-medium text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              <span className="text-foreground font-semibold">Join a fast-growing cohort</span> of aspiring and current PMs practicing with ProdSchool—improving faster and landing roles at top companies.
-            </h3>
-            <CompanyLogos className="opacity-80" />
+            {/* Restored heading + subline */}
+            <div className="text-center space-y-6 max-w-3xl mx-auto">
+              <h2 className="font-display font-bold text-3xl md:text-4xl">
+                Community <span className="gradient-text">Momentum</span>
+              </h2>
+              <h3 className="text-base md:text-lg font-medium text-muted-foreground leading-relaxed">
+                <span className="text-foreground font-semibold">Join a fast-growing PM cohort</span> leveling up faster with ProdSchool.
+              </h3>
+            </div>
+            {/* Two-column contextual block + logos */}
+            <div className="grid md:grid-cols-5 gap-12 items-center">
+              <div className="md:col-span-2 space-y-5 text-center md:text-left max-w-md mx-auto md:mx-0">
+                <h4 className="font-display font-semibold text-lg md:text-xl tracking-tight">
+                  From Practice Sessions to <span className="gradient-text">Offer Letters</span>
+                </h4>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  Community members landed roles at Google, Amazon, Microsoft, Meta, Stripe & more after honing structured thinking and product storytelling here.
+                </p>
+                <ul className="text-xs md:text-sm text-muted-foreground/80 space-y-3">
+                  <li className="flex items-start gap-3">
+                    <span className="w-8 h-8 rounded-xl app-gradient/80 shadow shadow-cyan-500/25 flex items-center justify-center shrink-0">
+                      <TrendingUp className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="leading-relaxed"><span className="text-foreground/90 font-medium">Higher callback rates</span> after structured answer refinement</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-8 h-8 rounded-xl app-gradient/80 shadow shadow-cyan-500/25 flex items-center justify-center shrink-0">
+                      <BookOpen className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="leading-relaxed"><span className="text-foreground/90 font-medium">Clearer product narratives</span> from repeated framework reps</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-8 h-8 rounded-xl app-gradient/80 shadow shadow-cyan-500/25 flex items-center justify-center shrink-0">
+                      <Zap className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="leading-relaxed"><span className="text-foreground/90 font-medium">Faster improvement cycles</span> via instant AI critique + peer review</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="md:col-span-3 flex justify-center md:justify-end">
+                <CompanyLogos className="opacity-95 max-w-4xl" />
+              </div>
+            </div>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-            {[
-              { value: "150+", label: "Practice Questions", icon: BookOpen },
-              { value: "12.5K+", label: "Active Users", icon: Users },
-              { value: "85%", label: "Avg Improvement", icon: TrendingUp },
-              { value: "92%", label: "Success Rate", icon: Trophy },
-            ].map((metric, index) => (
-              <motion.div
-                key={metric.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center group relative"
-              >
-                <div className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform duration-300 app-gradient shadow shadow-cyan-500/30">
-                  <metric.icon className="h-8 w-8 text-white" />
-                </div>
-                <div className="font-display font-bold text-3xl md:text-4xl gradient-text mb-2 tracking-tight">{metric.value}</div>
-                <div className="text-sm text-muted-foreground font-medium">{metric.label}</div>
-                <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 border border-primary/20" />
-              </motion.div>
-            ))}
+          <div className="mt-16 md:mt-28" />
+
+          <div className="grid md:grid-cols-5 gap-12 items-start">
+            {/* Metrics grid now on left */}
+            <div className="md:col-span-3" style={{ marginTop: metricsOffset }} ref={metricsGridRef}>
+              <div className="grid grid-cols-2 gap-10 w-full">
+                {[
+                  { value: "150+", label: "Practice Questions", icon: BookOpen },
+                  { value: "12.5K+", label: "Active Users", icon: Users },
+                  { value: "85%", label: "Avg Improvement", icon: TrendingUp },
+                  { value: "92%", label: "Success Rate", icon: Trophy },
+                ].map((metric, index) => (
+                  <motion.div
+                    key={metric.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.55, delay: index * 0.1 }}
+                    className="flex items-center gap-5 md:gap-6 group relative"
+                  >
+                    <div className="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 app-gradient/85 shadow shadow-cyan-500/25">
+                      <metric.icon className="h-7 w-7 text-white/95" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-display font-bold text-2xl md:text-3xl gradient-text tracking-tight leading-none">{metric.value}</div>
+                      <div className="text-[12px] md:text-sm text-muted-foreground font-medium leading-tight">{metric.label}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Descriptive panel now on right */}
+            <motion.div
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.65 }}
+              className="md:col-span-2 space-y-6 text-center md:text-left max-w-md mx-auto md:mx-0"
+              ref={leftMetricsRef}
+            >
+              <h4 className="font-display font-semibold text-xl md:text-2xl tracking-tight">
+                Outcomes That <span className="gradient-text">Recruiters Notice</span>
+              </h4>
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                Focused practice compounds fast. A few structured reps each week builds sharper product sense, clearer frameworks, and confident delivery when it counts.
+              </p>
+              <ul className="text-[13px] md:text-sm space-y-2 text-muted-foreground/90">
+                <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-green-500 mt-0.5" /> Noticeable clarity gains after the first 10 questions</li>
+                <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-green-500 mt-0.5" /> AI feedback shortens iteration cycles dramatically</li>
+                <li className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-green-500 mt-0.5" /> Community benchmarks anchor realistic progress</li>
+              </ul>
+            </motion.div>
           </div>
         </div>
       </section>
