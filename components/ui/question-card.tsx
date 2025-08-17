@@ -1,25 +1,25 @@
 "use client"
 
-import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, Clock, Users, Star, Play, Eye, EyeOff } from "lucide-react"
+import { ChevronDown, Clock, Users, Star, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Question {
-  id: number
+  id: number | string
   title: string
-  category: string
-  difficulty: string
-  timeLimit: number
-  description: string
-  prompt: string
+  category?: string
+  difficulty?: string
+  timeLimit?: number
+  description?: string
+  prompt?: string
   tags: string[]
-  attempts: number
-  avgScore: number
+  companyTags?: string[]
+  attempts?: number
+  avgScore?: number
   isHot?: boolean
 }
 
@@ -27,24 +27,21 @@ interface QuestionCardProps {
   question: Question
   isExpanded?: boolean
   onToggle?: () => void
-  showPrompt?: boolean
-  onTogglePrompt?: (visible: boolean) => void
   onStartPractice?: () => void
   onViewSolutions?: () => void
   isClickable?: boolean
+  showTagsOnTop?: boolean
 }
 
 export function QuestionCard({
   question,
   isExpanded = false,
   onToggle,
-  showPrompt = true,
-  onTogglePrompt,
   onStartPractice,
   onViewSolutions,
   isClickable = true,
+  showTagsOnTop = false,
 }: QuestionCardProps) {
-  const [isPromptVisible, setIsPromptVisible] = useState(showPrompt)
   const router = useRouter()
 
   const difficultyColor =
@@ -52,13 +49,7 @@ export function QuestionCard({
       Easy: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
       Medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       Hard: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-    }[question.difficulty] || "bg-gray-100 text-gray-800"
-
-  const handlePromptToggle = () => {
-    const newState = !isPromptVisible
-    setIsPromptVisible(newState)
-    onTogglePrompt?.(newState)
-  }
+    }[question.difficulty || ''] || "bg-gray-100 text-gray-800"
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger card click if clicking on buttons or interactive elements
@@ -93,32 +84,48 @@ export function QuestionCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              {question.isHot && (
-                <Badge variant="destructive" className="text-xs">
-                  🔥 Hot
+            <div className="flex items-start justify-between mb-2 gap-2">
+              <div className="flex items-center flex-wrap gap-2">
+                {showTagsOnTop && question.tags?.length
+                  ? question.tags.slice(0,3).map(tag => (
+                      <Badge key={tag} variant="outline" className="text-[10px] font-medium px-2 py-0.5 rounded-md">
+                        {tag}
+                      </Badge>
+                    ))
+                  : (
+                    <>
+                      {question.isHot && (
+                        <Badge variant="destructive" className="text-xs">
+                          🔥 Hot
+                        </Badge>
+                      )}
+                      {question.category && (
+                        <Badge variant="secondary" className="text-xs">
+                          {question.category}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+              </div>
+              {question.difficulty && (
+                <Badge variant="outline" className={cn("text-xs", difficultyColor)}>
+                  {question.difficulty}
                 </Badge>
               )}
-              <Badge variant="outline" className={cn("text-xs", difficultyColor)}>
-                {question.difficulty}
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {question.category}
-              </Badge>
             </div>
             <h3 className="font-display font-semibold text-lg leading-tight mb-2">{question.title}</h3>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {question.timeLimit}m
+                {question.timeLimit ?? 45}m
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                {question.attempts.toLocaleString()}
+                {(question.attempts ?? 0).toLocaleString()}
               </div>
               <div className="flex items-center gap-1">
                 <Star className="h-3 w-3 fill-current text-yellow-500" />
-                {question.avgScore.toFixed(1)}
+                {(question.avgScore ?? 7.0).toFixed(1)}
               </div>
             </div>
           </div>
@@ -149,50 +156,24 @@ export function QuestionCard({
           >
             <CardContent className="pt-0">
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground leading-relaxed">{question.description}</p>
-
-                {onTogglePrompt && (
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-sm">Interview Prompt</h4>
-                    <Button variant="ghost" size="sm" onClick={handlePromptToggle} className="text-xs">
-                      {isPromptVisible ? (
-                        <>
-                          <EyeOff className="h-3 w-3 mr-1" />
-                          Hide Prompt
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-3 w-3 mr-1" />
-                          Show Prompt
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                {question.description && (
+                  <p className="text-sm text-muted-foreground leading-relaxed">{question.description}</p>
                 )}
 
-                <AnimatePresence>
-                  {isPromptVisible && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-sm leading-relaxed">{question.prompt}</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex flex-wrap gap-1">
-                  {question.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
+                {(question.tags?.length || question.companyTags?.length) && (
+                  <div className="flex flex-wrap gap-1">
+                    {question.tags?.map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {question.companyTags?.map((c) => (
+                      <Badge key={c} variant="secondary" className="text-[10px]">
+                        {c}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
                 <div className="flex gap-2 pt-2">
                   <Button 
