@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Marquee } from "@/components/ui/marquee"
-import { MainNavigation } from "@/components/ui/navigation"
 import { DynamicBackground } from "@/components/ui/dynamic-background"
 import {
   Play,
@@ -29,7 +28,6 @@ import {
 } from "lucide-react"
 import { mockTestimonials } from "@/lib/mock-data" // temporary fallback until testimonials table is populated
 import { CompanyLogos } from "@/components/CompanyLogos"
-import Footer from "./components/Footer"
 
 export default function HomePage() {
   // Live questions fetched from Supabase (falls back to mock data if unavailable)
@@ -233,7 +231,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen overflow-hidden">
       <DynamicBackground />
-      <MainNavigation />
 
       {/* Hero Section - Completely Redesigned */}
   <section className="relative min-h-screen pt-8 pb-10 lg:pt-12 lg:pb-16 flex items-start section-hazy">
@@ -914,7 +911,6 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
-      <Footer />
     </div>
   )
 }

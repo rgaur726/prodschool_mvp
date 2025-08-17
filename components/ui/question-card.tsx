@@ -113,7 +113,14 @@ export function QuestionCard({
                 </Badge>
               )}
             </div>
-            <h3 className="font-display font-semibold text-lg leading-tight mb-2">{question.title}</h3>
+            <h3
+              className={cn(
+                "font-display font-semibold text-lg leading-snug mb-2 min-h-[3.1rem]", // ~ two lines reserved
+                !isExpanded && "line-clamp-2"
+              )}
+            >
+              {question.title}
+            </h3>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />

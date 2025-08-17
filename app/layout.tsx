@@ -1,6 +1,8 @@
 import "./globals.css"
 import { inter, spaceGrotesk } from "@/lib/fonts"
 import { ThemeProvider } from "@/components/theme-provider"
+import { MainNavigation } from "@/components/ui/navigation"
+import Footer from "./components/Footer"
 import type React from "react"
 
 export const metadata = {
@@ -16,9 +18,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
-  <body className="min-h-screen bg-background text-foreground font-body antialiased font-medium">
+      <body className="min-h-screen bg-background text-foreground font-body antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <MainNavigation />
           {children}
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

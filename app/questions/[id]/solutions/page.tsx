@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { useParams, useRouter } from "next/navigation"
-import { MainNavigation } from "@/components/ui/navigation"
 import { DynamicBackground } from "@/components/ui/dynamic-background"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -140,7 +139,6 @@ export default function QuestionSolutionsPage() {
   return (
     <div className="min-h-screen">
       <DynamicBackground />
-      <MainNavigation />
 
       <div className="container py-8">
         {/* Back Button */}

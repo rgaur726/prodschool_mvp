@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { MainNavigation } from "@/components/ui/navigation"
 import { DynamicBackground } from "@/components/ui/dynamic-background"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -70,7 +69,6 @@ export default function AIFeedbackPage() {
   return (
     <div className="min-h-screen">
       <DynamicBackground />
-      <MainNavigation />
 
       <div className="container py-8">
         <motion.div

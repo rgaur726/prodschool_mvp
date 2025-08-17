@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { motion } from "framer-motion"
-import { MainNavigation } from "@/components/ui/navigation"
 import { DynamicBackground } from "@/components/ui/dynamic-background"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,7 +46,6 @@ export default function ComingSoonPage() {
   return (
     <div className="min-h-screen">
       <DynamicBackground />
-      <MainNavigation />
 
       <div className="container py-8">
         <motion.div
