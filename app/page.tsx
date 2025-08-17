@@ -27,12 +27,24 @@ import {
   CheckCircle,
   UserPlus,
 } from "lucide-react"
-import { mockTestimonials } from "@/lib/mock-data"
+import { mockTestimonials } from "@/lib/mock-data" // temporary fallback until testimonials table is populated
 import { CompanyLogos } from "@/components/CompanyLogos"
 import Footer from "./components/Footer"
 
 export default function HomePage() {
   // Live questions fetched from Supabase (falls back to mock data if unavailable)
+  interface Testimonial {
+    id: string
+    name: string
+    role: string | null
+    content: string | null
+    avatar: string | null
+    rating: number | null
+    company: string | null
+    previousRole?: string | null
+    createdAt?: string | null
+    isFeatured?: boolean | null
+  }
   interface Question {
     id: number | string
     title: string
@@ -52,6 +64,9 @@ export default function HomePage() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [questionsError, setQuestionsError] = useState<string | null>(null)
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [loadingTestimonials, setLoadingTestimonials] = useState(false)
+  const [testimonialsError, setTestimonialsError] = useState<string | null>(null)
   const baseQuestions = (questions && questions.length > 0) ? questions.map(raw => {
     // Flexible key resolution (handles multiple possible column names)
     const get = (...keys: string[]) => {
@@ -141,6 +156,36 @@ export default function HomePage() {
       }
     }
     fetchQuestions()
+    return () => { cancelled = true }
+  }, [])
+
+  // Fetch testimonials
+  useEffect(() => {
+    let cancelled = false
+    async function fetchTestimonials() {
+      if (!supabase) return
+      try {
+        setLoadingTestimonials(true)
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('*')
+          .order('createdAt', { ascending: false })
+          .limit(40)
+        if (error) {
+          console.warn('[testimonials fetch error]', error.message)
+          setTestimonialsError(error.message)
+          return
+        }
+        if (!cancelled && data) {
+          setTestimonials(data as any)
+        }
+      } catch (e:any) {
+        if (!cancelled) setTestimonialsError(e.message)
+      } finally {
+        if (!cancelled) setLoadingTestimonials(false)
+      }
+    }
+    fetchTestimonials()
     return () => { cancelled = true }
   }, [])
 
@@ -716,41 +761,99 @@ export default function HomePage() {
         </div>
         {/* Row 1 (left to right) */}
         <Marquee className="py-4" pauseOnHover speed="slow">
-          {mockTestimonials.map((t) => (
-            <Card key={`row1-${t.id}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20">
-              <CardContent className="p-6 flex flex-col h-full">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-sm">
-                    {t.name.split(' ').map(n=>n[0]).join('')}
+          {(loadingTestimonials && testimonials.length===0 ? Array.from({length:8}) : (testimonials.length? testimonials : mockTestimonials)).map((t:any, idx:number) => {
+            if (!t) {
+              return (
+                <Card key={`tm-skel-1-${idx}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2">
+                  <CardContent className="p-6 flex flex-col h-full animate-pulse space-y-4">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="w-10 h-10 bg-muted/40 rounded-2xl" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-3 w-32 bg-muted/30 rounded" />
+                        <div className="h-3 w-24 bg-muted/20 rounded" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 w-full bg-muted/30 rounded" />
+                      <div className="h-3 w-5/6 bg-muted/20 rounded" />
+                      <div className="h-3 w-2/3 bg-muted/20 rounded" />
+                      <div className="h-3 w-1/2 bg-muted/10 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            }
+            const avatar = t.avatar || '/placeholder-user.jpg'
+            const initials = t.name?.split(' ').map((n:string)=>n[0]).join('').slice(0,2) || 'U'
+            return (
+              <Card key={`row1-${t.id}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20">
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-start gap-3 mb-4">
+                    {avatar ? (
+                      <img src={avatar} alt={t.name||'User'} className="w-10 h-10 rounded-2xl object-cover ring-2 ring-primary/20" />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-sm">
+                        {initials}
+                      </div>
+                    )}
+                    <div className="space-y-0.5">
+                      <div className="font-semibold text-sm tracking-tight">{t.name}</div>
+                      <div className="text-xs text-muted-foreground font-medium">{t.role || t.company || 'PM Candidate'}</div>
+                    </div>
                   </div>
-                  <div className="space-y-0.5">
-                    <div className="font-semibold text-sm tracking-tight">{t.name}</div>
-                    <div className="text-xs text-muted-foreground font-medium">{t.role}</div>
-                  </div>
-                </div>
-                <p className="text-sm leading-relaxed text-muted-foreground/90 line-clamp-4">“{t.content}”</p>
-              </CardContent>
-            </Card>
-          ))}
+                  <p className="text-sm leading-relaxed text-muted-foreground/90 line-clamp-4">“{t.content}”</p>
+                </CardContent>
+              </Card>
+            )
+          })}
         </Marquee>
         {/* Row 2 (right to left) */}
         <Marquee className="py-6 mt-4" reverse pauseOnHover speed="slow">
-          {mockTestimonials.slice().reverse().map((t) => (
-            <Card key={`row2-${t.id}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20">
-              <CardContent className="p-6 flex flex-col h-full">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-sm">
-                    {t.name.split(' ').map(n=>n[0]).join('')}
+          {(loadingTestimonials && testimonials.length===0 ? Array.from({length:8}) : (testimonials.length? [...testimonials].reverse() : mockTestimonials.slice().reverse())).map((t:any, idx:number) => {
+            if (!t) {
+              return (
+                <Card key={`tm-skel-2-${idx}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2">
+                  <CardContent className="p-6 flex flex-col h-full animate-pulse space-y-4">
+                    <div className="flex items-start gap-3 mb-2">
+                      <div className="w-10 h-10 bg-muted/40 rounded-2xl" />
+                      <div className="space-y-2 flex-1">
+                        <div className="h-3 w-32 bg-muted/30 rounded" />
+                        <div className="h-3 w-24 bg-muted/20 rounded" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-3 w-full bg-muted/30 rounded" />
+                      <div className="h-3 w-5/6 bg-muted/20 rounded" />
+                      <div className="h-3 w-2/3 bg-muted/20 rounded" />
+                      <div className="h-3 w-1/2 bg-muted/10 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            }
+            const avatar = t.avatar || '/placeholder-user.jpg'
+            const initials = t.name?.split(' ').map((n:string)=>n[0]).join('').slice(0,2) || 'U'
+            return (
+              <Card key={`row2-${t.id}`} className="w-96 shrink-0 mx-3 modern-card rounded-3xl border-2 hover:border-primary/20">
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-start gap-3 mb-4">
+                    {avatar ? (
+                      <img src={avatar} alt={t.name||'User'} className="w-10 h-10 rounded-2xl object-cover ring-2 ring-primary/20" />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-sm">
+                        {initials}
+                      </div>
+                    )}
+                    <div className="space-y-0.5">
+                      <div className="font-semibold text-sm tracking-tight">{t.name}</div>
+                      <div className="text-xs text-muted-foreground font-medium">{t.role || t.company || 'PM Candidate'}</div>
+                    </div>
                   </div>
-                  <div className="space-y-0.5">
-                    <div className="font-semibold text-sm tracking-tight">{t.name}</div>
-                    <div className="text-xs text-muted-foreground font-medium">{t.role}</div>
-                  </div>
-                </div>
-                <p className="text-sm leading-relaxed text-muted-foreground/90 line-clamp-4">“{t.content}”</p>
-              </CardContent>
-            </Card>
-          ))}
+                  <p className="text-sm leading-relaxed text-muted-foreground/90 line-clamp-4">“{t.content}”</p>
+                </CardContent>
+              </Card>
+            )
+          })}
         </Marquee>
       </section>
 
