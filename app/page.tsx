@@ -504,39 +504,32 @@ export default function HomePage() {
                       {content}
                     </p>
                     {/* Companies (collapsed to one line with +X) */}
-                    <div className="flex items-center gap-2 mb-4 -mt-1 flex-nowrap overflow-hidden" title={companies.join(', ')}>
+                    <div className="flex items-center gap-1.5 mb-4 -mt-1 flex-nowrap overflow-hidden" title={companies.join(', ')}>
                       {visibleCompanies.map((c, ci) => {
                         const key = (c || '').trim()
-                        const label = key.split(/[\s_-]+/).filter(Boolean).map(p=>p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join('')
-                        // Deterministic gradient selection
-                        const gradients = [
-                          'from-pink-500 to-rose-500',
-                          'from-amber-500 to-orange-600',
-                          'from-emerald-500 to-teal-600',
-                          'from-indigo-500 to-violet-600',
-                          'from-sky-500 to-cyan-500',
-                          'from-fuchsia-500 to-pink-600',
-                          'from-blue-600 to-indigo-600'
-                        ]
-                        let idx = 0
-                        for (let i=0;i<key.length;i++) idx = (idx + key.charCodeAt(i)) % gradients.length
-                        const gradient = gradients[idx]
+                        const label = key
+                          .split(/[\s_-]+/)
+                          .filter(Boolean)
+                          .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+                          .join(' ')
                         return (
-                          <span
+                          <Badge
                             key={key+ci}
-                            className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-medium border border-white/10 bg-gradient-to-br ${gradient} text-white shadow-sm shadow-black/20`}
+                            variant="secondary"
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap"
                           >
                             {label}
-                          </span>
+                          </Badge>
                         )
                       })}
                       {hiddenCompanyCount > 0 && (
-                        <span
-                          className="inline-flex items-center rounded-lg px-2.5 py-1 text-[11px] font-medium border border-primary/40 bg-primary/15 text-primary/90 backdrop-blur-sm select-none"
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-md"
                           aria-label={`+${hiddenCompanyCount} more companies`}
                         >
                           +{hiddenCompanyCount}
-                        </span>
+                        </Badge>
                       )}
                     </div>
                     <div className="mt-auto space-y-4">
