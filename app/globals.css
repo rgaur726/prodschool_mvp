@@ -220,4 +220,7 @@
   .nav-mask { mask-image: linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%); }
   /* Line clamp utilities (custom since @tailwindcss/line-clamp not installed) */
   .line-clamp-4 { display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+  .line-clamp-10 { display: -webkit-box; -webkit-line-clamp: 10; line-clamp: 10; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
 }

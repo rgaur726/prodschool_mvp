@@ -44,12 +44,20 @@ export function QuestionCard({
 }: QuestionCardProps) {
   const router = useRouter()
 
-  const difficultyColor =
-    {
-      Easy: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      Medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-      Hard: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-    }[question.difficulty || ''] || "bg-gray-100 text-gray-800"
+  // Use provided normalized description (already mapped from content/prompt upstream)
+  const fullContent = (question as any).description || ''
+
+  // Homepage uses uniform badge styles (secondary variant) for difficulty
+  const formatDifficulty = (d?: string) => {
+    if (!d) return ''
+    // Normalize to camel case (handles UPPER, lower, snake/space)
+    return d
+      .toString()
+      .toLowerCase()
+      .split(/[\s_-]+/)
+      .map(seg => seg ? seg[0].toUpperCase() + seg.slice(1) : seg)
+      .join(' ')
+  }
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger card click if clicking on buttons or interactive elements
@@ -94,13 +102,8 @@ export function QuestionCard({
                     ))
                   : (
                     <>
-                      {question.isHot && (
-                        <Badge variant="destructive" className="text-xs">
-                          🔥 Hot
-                        </Badge>
-                      )}
                       {question.category && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="outline" className="rounded-xl text-xs px-3 py-1 whitespace-nowrap">
                           {question.category}
                         </Badge>
                       )}
@@ -108,8 +111,8 @@ export function QuestionCard({
                   )}
               </div>
               {question.difficulty && (
-                <Badge variant="outline" className={cn("text-xs", difficultyColor)}>
-                  {question.difficulty}
+                <Badge variant="secondary" className="rounded-xl text-[10px] px-2 py-0.5 font-medium whitespace-nowrap">
+                  {formatDifficulty(question.difficulty)}
                 </Badge>
               )}
             </div>
@@ -121,6 +124,26 @@ export function QuestionCard({
             >
               {question.title}
             </h3>
+            {isExpanded && fullContent && (
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3 line-clamp-10">
+                {fullContent}
+              </p>
+            )}
+            {/* Company tags visible even when collapsed */}
+            {!isExpanded && question.companyTags?.length ? (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {question.companyTags.slice(0,4).map(c => (
+                  <Badge key={c} variant="secondary" className="text-[10px] font-medium px-2 py-0.5 rounded-md">
+                    {c}
+                  </Badge>
+                ))}
+                {question.companyTags.length > 4 && (
+                  <span className="text-[10px] text-muted-foreground">+{question.companyTags.length - 4}</span>
+                )}
+              </div>
+            ) : null}
+            {/* Description snippet in collapsed state */}
+            {/* Removed collapsed snippet per request; content only visible when expanded */}
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -134,6 +157,9 @@ export function QuestionCard({
                 <Star className="h-3 w-3 fill-current text-yellow-500" />
                 {(question.avgScore ?? 7.0).toFixed(1)}
               </div>
+              {question.isHot && (
+                <span className="inline-flex items-center gap-1 text-red-500 font-medium text-[11px]">🔥 Hot</span>
+              )}
             </div>
           </div>
           {onToggle && (
@@ -163,9 +189,7 @@ export function QuestionCard({
           >
             <CardContent className="pt-0">
               <div className="space-y-4">
-                {question.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{question.description}</p>
-                )}
+                {/* Description moved above under title when expanded */}
 
                 {(question.tags?.length || question.companyTags?.length) && (
                   <div className="flex flex-wrap gap-1">

@@ -257,21 +257,10 @@ export default function HomePage() {
                 </div>
 
                 <h1 className="font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-tight">
-                  <span className="gradient-text">Master PM</span>
+                  <span className="text-foreground">Master </span>
+                  <span className="gradient-text">PM Interviews</span>
                   <br />
-                  <span className="text-foreground">Interviews with</span>
-                  <br />
-                  <span className="relative">
-                    <span className="gradient-text">Confidence</span>
-                    <motion.div
-                      className="absolute -bottom-1.5 left-0 right-0 h-2 rounded-full overflow-hidden"
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ duration: 1, delay: 0.5 }}
-                    >
-                      <div className="w-full h-full app-gradient animate-pulse [animation-duration:3s] opacity-90" />
-                    </motion.div>
-                  </span>
+                  <span className="text-foreground">with Confidence</span>
                 </h1>
 
                 <p className="text-xl text-muted-foreground leading-relaxed max-w-lg">
@@ -434,7 +423,8 @@ export default function HomePage() {
             className="text-center"
           >
             <h2 className="font-display font-bold text-3xl md:text-4xl mb-4">
-              <span className="gradient-text">Trending Questions</span>
+              <span className="text-foreground">Trending </span>
+              <span className="gradient-text">Questions</span>
             </h2>
             <p className="text-muted-foreground text-lg">Practice what other candidates are attempting right now</p>
           </motion.div>

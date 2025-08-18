@@ -11,7 +11,8 @@ import { QuestionCard } from "@/components/ui/question-card"
 import { Search } from "lucide-react"
 import { supabase } from "@/lib/supabase-client"
 
-const difficulties = ["All", "Easy", "Medium", "Hard"]
+// Default difficulty options (will be merged with any others found in data)
+const baseDifficulties = ["Easy", "Medium", "Hard"]
 
 interface DBQuestionRow {
   id: string
@@ -88,9 +89,10 @@ export default function QuestionsPage() {
       id: String(q.id),
       title: q.title || q.questionTitle || "Untitled Question",
       category: (q.category || q.questionCategory || undefined) ?? undefined,
-      difficulty: q.difficulty || undefined,
+      difficulty: q.difficulty ? (q.difficulty as string).toString().split(/[\s_-]+/).map(seg => seg ? seg[0].toUpperCase() + seg.slice(1).toLowerCase() : seg).join(' ') : undefined,
       timeLimit: q.timeLimit ?? 45,
-      description: q.description || undefined,
+  // Prefer explicit description; fall back to content or prompt columns from Supabase
+  description: q.description || (q as any).content || q.prompt || undefined,
       prompt: q.prompt || undefined,
       tags: Array.isArray(q.tags) ? (q.tags as string[]) : [],
       companyTags: Array.isArray(q.companyTags) ? (q.companyTags as string[]) : [],
@@ -112,12 +114,20 @@ export default function QuestionsPage() {
     return Array.from(set).sort()
   }, [normalizedQuestions])
 
+  const availableDifficulties = useMemo(() => {
+    const set = new Set<string>()
+    normalizedQuestions.forEach(q => { if (q.difficulty) set.add(q.difficulty) })
+    // Merge with base list to keep ordering preference
+    const merged = Array.from(new Set([...baseDifficulties, ...Array.from(set)]))
+    return merged
+  }, [normalizedQuestions])
+
   const filteredQuestions = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
     return normalizedQuestions.filter(q => {
       const matchesSearch = !term || q.title.toLowerCase().includes(term)
       const matchesCategory = selectedCategory === "All" || q.category === selectedCategory
-      const matchesDifficulty = selectedDifficulty === "All" || q.difficulty === selectedDifficulty
+      const matchesDifficulty = selectedDifficulty === "All" || (q.difficulty && q.difficulty.trim().toLowerCase() === selectedDifficulty.trim().toLowerCase())
       const matchesCompany = selectedCompany === "All" || q.companyTags.includes(selectedCompany)
       return matchesSearch && matchesCategory && matchesDifficulty && matchesCompany
     })
@@ -135,6 +145,13 @@ export default function QuestionsPage() {
     setSelectedDifficulty("All")
     setSelectedCompany("All")
   }
+
+  const hasAnyFilter = (
+    searchTerm.trim().length > 0 ||
+    selectedCategory !== 'All' ||
+    selectedDifficulty !== 'All' ||
+    selectedCompany !== 'All'
+  )
 
   return (
     <div className="container py-8">
@@ -155,19 +172,24 @@ export default function QuestionsPage() {
                 {availableCategories.map(category => <SelectItem key={category} value={category}>{category}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={selectedDifficulty === 'All' ? '' : selectedDifficulty} onValueChange={(v) => setSelectedDifficulty(v || 'All')}>
+      <Select value={selectedDifficulty === 'All' ? '' : selectedDifficulty} onValueChange={(v) => setSelectedDifficulty(v || 'All')}>
               <SelectTrigger className="w-full md:w-40"><SelectValue placeholder="Difficulty" /></SelectTrigger>
               <SelectContent>
-                {difficulties.map(diff => <SelectItem key={diff} value={diff}>{diff}</SelectItem>)}
+        {availableDifficulties.map(diff => <SelectItem key={diff} value={diff}>{diff}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-wrap gap-2 mb-6">
-            {selectedCategory !== 'All' && <Badge variant="secondary" className="gap-1">Category: {selectedCategory}<button onClick={() => setSelectedCategory('All')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
-            {selectedDifficulty !== 'All' && <Badge variant="secondary" className="gap-1">Difficulty: {selectedDifficulty}<button onClick={() => setSelectedDifficulty('All')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
-            {selectedCompany !== 'All' && <Badge variant="secondary" className="gap-1">Company: {selectedCompany}<button onClick={() => setSelectedCompany('All')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
-            {searchTerm && <Badge variant="secondary" className="gap-1">Search: "{searchTerm}"<button onClick={() => setSearchTerm("")} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
-          </div>
+          {hasAnyFilter && (
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div className="flex flex-wrap gap-2">
+                {selectedCategory !== 'All' && <Badge variant="secondary" className="gap-1">Category: {selectedCategory}<button onClick={() => setSelectedCategory('All')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
+                {selectedDifficulty !== 'All' && <Badge variant="secondary" className="gap-1">Difficulty: {selectedDifficulty}<button onClick={() => setSelectedDifficulty('All')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
+                {selectedCompany !== 'All' && <Badge variant="secondary" className="gap-1">Company: {selectedCompany}<button onClick={() => setSelectedCompany('All')} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
+                {searchTerm && <Badge variant="secondary" className="gap-1">Search: "{searchTerm}"<button onClick={() => setSearchTerm("")} className="ml-1 hover:bg-secondary-foreground/20 rounded-full px-1">×</button></Badge>}
+              </div>
+              <Button variant="ghost" size="sm" onClick={clearAll} className="shrink-0 ml-auto text-xs">Clear Filters</Button>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {loading && !normalizedQuestions.length && <div className="col-span-full grid gap-4">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-40 rounded-lg border border-border/60 bg-muted/20 animate-pulse" />)}</div>}
             {!loading && filteredQuestions.length === 0 ? (
@@ -179,7 +201,14 @@ export default function QuestionsPage() {
             ) : (
               paginatedQuestions.map((question, index) => (
                 <motion.div key={question.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.05 }}>
-                  <QuestionCard question={question} isExpanded={expandedCard === question.id} onToggle={() => setExpandedCard(expandedCard === question.id ? null : question.id)} onStartPractice={() => router.push(`/app/workspace?question=${question.id}`)} onViewSolutions={() => router.push(`/questions/${question.id}/solutions`)} showTagsOnTop />
+                  <QuestionCard
+                    question={question}
+                    isExpanded={expandedCard === question.id}
+                    onToggle={() => setExpandedCard(prev => prev === question.id ? null : question.id)}
+                    onStartPractice={() => router.push(`/app/workspace?question=${question.id}`)}
+                    onViewSolutions={() => router.push(`/questions/${question.id}/solutions`)}
+                    showTagsOnTop
+                  />
                 </motion.div>
               ))
             )}
