@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Open book with neural network and strategy icons emerging">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="900" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0d1117" />
+      <stop offset="60%" stop-color="#0d1117" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="bookGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 560) scale(520 260)">
+      <stop stop-color="#2563eb" stop-opacity="0.9" />
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#g1)" />
+  <circle cx="600" cy="480" r="380" fill="url(#bookGlow)" opacity="0.35" />
+  <g stroke="#1e3a8a" stroke-width="2" stroke-linecap="round" opacity="0.35">
+    <path d="M240 390h20M300 420h15M925 410h15M880 365h20M1010 480h18M190 470h18M260 520h22" />
+  </g>
+  <g stroke="#60a5fa" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M450 340c0-95 300-95 300 0 0 65-48 120-150 120s-150-55-150-120z" />
+    <path d="M510 330c40 10 60 20 80 50" />
+    <path d="M620 330c-25 15-40 30-55 60" />
+    <path d="M565 365c35 10 55 25 70 55" />
+    <path d="M640 365c-20 15-30 30-38 50" />
+  </g>
+  <g fill="#93c5fd">
+    <circle cx="520" cy="350" r="7" />
+    <circle cx="560" cy="365" r="7" />
+    <circle cx="600" cy="345" r="7" />
+    <circle cx="640" cy="365" r="7" />
+    <circle cx="585" cy="410" r="7" />
+    <circle cx="555" cy="410" r="7" />
+    <circle cx="625" cy="400" r="7" />
+  </g>
+  <g stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <rect x="360" y="420" width="55" height="55" rx="8" />
+    <path d="M388 475v40M388 515l-18 22M388 515l18 22" />
+    <path d="M760 470l65-65 55 55" />
+    <path d="M880 420v150" />
+    <path d="M790 520c0-40 30-75 60-75 18 0 38 12 44 40-6 0-22-6-30-14 4 18 4 20-2 32 9 8 12 18 12 38H790v-21z" />
+    <path d="M900 445h70M935 445v-30M920 415h30" />
+    <path d="M905 470h60l-10 120h-40l-10-120z" />
+  </g>
+  <path d="M600 560v-110l35 35" stroke="#60a5fa" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M600 450l-35 35" stroke="#60a5fa" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+  <g>
+    <path d="M340 640c160-40 160-40 260 0s100 40 260 0l40 140c-150 45-190 20-300-15-110 35-150 60-300 15l40-140z" fill="#1e293b" />
+    <path d="M360 640c150-38 155-38 240 0 85-38 90-38 240 0v90c-150 40-155 40-240 5-85 35-90 35-240-5v-90z" fill="#f59e0b" />
+    <path d="M600 640v95" stroke="#ea580c" stroke-width="6" />
+    <path d="M600 640c-90-32-150-32-220-18v80c70 16 130 16 220-14 90 30 150 30 220 14v-80c-70-14-130-14-220 18z" fill="#fbbf24" />
+  </g>
+  <g fill="#3b82f6" opacity="0.4">
+    <circle cx="300" cy="360" r="4" />
+    <circle cx="900" cy="360" r="4" />
+    <circle cx="700" cy="300" r="3" />
+    <circle cx="500" cy="300" r="3" />
+    <circle cx="600" cy="260" r="5" />
+    <circle cx="640" cy="430" r="3" />
+    <circle cx="560" cy="430" r="3" />
+  </g>
+</svg>
